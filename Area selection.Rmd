@@ -278,19 +278,19 @@ for (i in seq(8,ncol(d_2017_suhbaatar), 3)){
 #install.packages("osmar")
 library("osmar")
 
-url <- "https://download.geofabrik.de/asia/mongolia.html"
-file <- "mongolia-latest.osm.pbf"
+url <- "https://download.geofabrik.de/asia/mongolia-latest.osm.bz2"
+file <- "mongolia-latest.osm.bz2"
 download.file(url, file)
 
-api <- osmsource_api()
-box <- center_bbox(106.6672, 47.8611, 700, 700)
-ub_b <- get_osm(box, api)
-#with above, there seems to be something wrong with the website actually...
+system("bzip2 -d mongolia-latest.osm.bz2")
 
-
-src <- osmsource_osmosis(file = file)
-ub_bbox <- center_bbox(106.9057, 47.8864, 700, 700)
+src <- osmsource_osmosis(file = "mongolia-latest.osm", osmosis = "osmosis")
+ub_bbox <- center_bbox(106.9057, 47.8864, 10000, 10000)
 ub <- get_osm(ub_bbox, src)
+
+
+
+
 
 
 
@@ -305,4 +305,4 @@ ub <- get_osm(ub_bbox, src)
 
 
 
-           
+                                                                                                                                                                                                                                                                                                          
