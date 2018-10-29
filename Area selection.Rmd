@@ -1,0 +1,308 @@
+---
+title: "Area selection"
+author: "Natalia Fedorova"
+date: "22 October 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This file serves to document the process by which study areas within Ulaanbaatar were selected for the case study. The imperative of the selection process is to select areas that are similar demographically but vary in terms of how long inhabitants have resided there
+
+Ulaanbaatar is divided into nine districts (D????regs): Baganuur, Bagakhangai, Bayangol, Bayanz??rkh, Chingeltei, Khan Uul, Nalaikh, Songino Khairkhan and S??khbaatar. Each district is subdivided into khoroos, of which there are 121. Khoroos are further divided into Khesegs which each have a Kheseg leader responsible for door-to-door data collection and other administrative activities (these persons tend to know all the households in their khesegs). The Khesegs are the units that will be selected, and the kheseg leaders will be hired to collect data (and ultimately also be part of focal sessions, and have data ownership).
+
+Part one of the selection process is to visualize the population age composition of the khesegs, this is based on data from the UB statistics office:
+http://ubstat.mn/JobTables.aspx
+
+Loading data from .xlsx files and renaming columns into english
+```{r}
+#install.packages("readxl")
+library("readxl")
+
+col_names_bagan <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f", "k3_t", "k3_m", "k3_f", "k4_t", "k4_m", "k4_f", "k5_t", "k5_m", "k5_f")
+col_names_bagah <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f")
+col_names_bayang <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f", "k3_t", "k3_m", "k3_f", "k4_t", "k4_m", "k4_f", "k5_t", "k5_m", "k5_f", "k6_t", "k6_m", "k6_f", "k7_t", "k7_m", "k7_f", "k8_t", "k8_m", "k8_f", "k9_t", "k9_m", "k9_f", "k10_t", "k10_m", "k10_f", "k11_t", "k11_m", "k11_f", "k12_t", "k12_m", "k12_f", "k13_t", "k13_m", "k13_f", "k14_t","k14_m", "k14_f", "k15_t", "k15_m", "k15_f", "k16_t", "k16_m", "k16_f", "k17_t", "k17_m", "k17_f", "k18_t", "k18_m", "k18_f", "k19_t", "k19_m", "k19_f", "k20_t", "k20_m", "k20_f", "k21_t", "k21_m", "k21_f", "k22_t", "k22_m", "k22_f", "k23_t", "k23_m", "k23_f" )
+col_names_bayanz <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f", "k3_t", "k3_m", "k3_f", "k4_t", "k4_m", "k4_f", "k5_t", "k5_m", "k5_f", "k6_t", "k6_m", "k6_f", "k7_t", "k7_m", "k7_f", "k8_t", "k8_m", "k8_f", "k9_t", "k9_m", "k9_f", "k10_t", "k10_m", "k10_f", "k11_t", "k11_m", "k11_f", "k12_t", "k12_m", "k12_f", "k13_t", "k13_m", "k13_f", "k14_t","k14_m", "k14_f", "k15_t", "k15_m", "k15_f", "k16_t", "k16_m", "k16_f", "k17_t", "k17_m", "k17_f", "k18_t", "k18_m", "k18_f", "k19_t", "k19_m", "k19_f", "k20_t", "k20_m", "k20_f", "k21_t", "k21_m", "k21_f", "k22_t", "k22_m", "k22_f", "k23_t", "k23_m", "k23_f", "k24_t", "k24_m", "k24_f", "k25_t", "k25_m", "k25_f", "k26_t", "k26_m", "k26_f", "k27_t", "k27_m", "k27_f", "k28_t", "k28_m", "k28_f")
+col_names_nal <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f", "k3_t", "k3_m", "k3_f", "k4_t", "k4_m", "k4_f", "k5_t", "k5_m", "k5_f", "k6_t", "k6_m", "k6_f", "k7_t", "k7_m", "k7_f")
+col_names_song <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f", "k3_t", "k3_m", "k3_f", "k4_t", "k4_m", "k4_f", "k5_t", "k5_m", "k5_f", "k6_t", "k6_m", "k6_f", "k7_t", "k7_m", "k7_f", "k8_t", "k8_m", "k8_f", "k9_t", "k9_m", "k9_f", "k10_t", "k10_m", "k10_f", "k11_t", "k11_m", "k11_f", "k12_t", "k12_m", "k12_f", "k13_t", "k13_m", "k13_f", "k14_t","k14_m", "k14_f", "k15_t", "k15_m", "k15_f", "k16_t", "k16_m", "k16_f", "k17_t", "k17_m", "k17_f", "k18_t", "k18_m", "k18_f", "k19_t", "k19_m", "k19_f", "k20_t", "k20_m", "k20_f", "k21_t", "k21_m", "k21_f", "k22_t", "k22_m", "k22_f", "k23_t", "k23_m", "k23_f", "k24_t", "k24_m", "k24_f", "k25_t", "k25_m", "k25_f", "k26_t", "k26_m", "k26_f", "k27_t", "k27_m", "k27_f", "k28_t", "k28_m", "k28_f", "k29_t", "k29_m", "k29_f", "k30_t", "k30_m", "k30_f", "k31_t", "k31_m", "k31_f", "k32_t", "k32_m", "k32_f")
+col_names_suh <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f", "k3_t", "k3_m", "k3_f", "k4_t", "k4_m", "k4_f", "k5_t", "k5_m", "k5_f", "k6_t", "k6_m", "k6_f", "k7_t", "k7_m", "k7_f", "k8_t", "k8_m", "k8_f", "k9_t", "k9_m", "k9_f", "k10_t", "k10_m", "k10_f", "k11_t", "k11_m", "k11_f", "k12_t", "k12_m", "k12_f", "k13_t", "k13_m", "k13_f", "k14_t", "k14_m", "k14_f", "k15_t", "k15_m", "k15_f", "k16_t", "k16_m", "k16_f", "k17_t", "k17_m", "k17_f", "k18_t", "k18_m", "k18_f", "k19_t", "k19_m", "k19_f", "k20_t", "k20_m", "k20_f")
+col_names_han <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f", "k3_t", "k3_m", "k3_f", "k4_t", "k4_m", "k4_f", "k5_t", "k5_m", "k5_f", "k6_t", "k6_m", "k6_f", "k7_t", "k7_m", "k7_f", "k8_t", "k8_m", "k8_f", "k9_t", "k9_m", "k9_f", "k10_t", "k10_m", "k10_f", "k11_t", "k11_m", "k11_f", "k12_t", "k12_m", "k12_f", "k13_t", "k13_m", "k13_f", "k14_t","k14_m", "k14_f", "k15_t", "k15_m", "k15_f", "k16_t", "k16_m", "k16_f")
+col_names_ching <- c("age", "total_t", "total_m", "total_f", "k1_t", "k1_m", "k1_f", "k2_t", "k2_m", "k2_f", "k3_t", "k3_m", "k3_f", "k4_t", "k4_m", "k4_f", "k5_t", "k5_m", "k5_f", "k6_t", "k6_m", "k6_f", "k7_t", "k7_m", "k7_f", "k8_t", "k8_m", "k8_f", "k9_t", "k9_m", "k9_f", "k10_t", "k10_m", "k10_f", "k11_t", "k11_m", "k11_f", "k12_t", "k12_m", "k12_f", "k13_t", "k13_m", "k13_f", "k14_t", "k14_m", "k14_f", "k15_t", "k15_m", "k15_f", "k16_t", "k16_m", "k16_f", "k17_t", "k17_m", "k17_f", "k18_t", "k18_m", "k18_f", "k19_t", "k19_m", "k19_f")
+
+#2011-2012
+d_2011_baganuur <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 1, col_names = col_names_bagan, skip = 4)
+d_2011_bagahangai <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 2, col_names = col_names_bagah, skip = 4)
+d_2011_bayangol <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 3, col_names = col_names_bayang, skip = 4)
+d_2011_bayanzurkh <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 4, col_names = col_names_bayanz, skip = 4)
+d_2011_nalaih <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 5, col_names = col_names_nal, skip = 4)
+d_2011_songinohairhan <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 6, col_names = col_names_song, skip = 4)
+d_2011_suhbaatar <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 7, col_names = col_names_suh, skip = 4)
+d_2011_hanull <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 8, col_names = col_names_han, skip = 4)
+d_2011_chingeltei <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2011_on-2012.xlsx" , sheet = 9, col_names = col_names_ching, skip = 4)
+
+#2014-2015
+d_2014_baganuur <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 1, col_names = col_names_bagan, skip = 4)
+d_2014_bagahangai <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 2, col_names = col_names_bagah, skip = 4)
+d_2014_bayangol <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 3, col_names = col_names_bayang, skip = 4)
+d_2014_bayanzurkh <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 4, col_names = col_names_bayanz, skip = 4)
+d_2014_nalaih <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 5, col_names = col_names_nal, skip = 4)
+d_2014_songinohairhan <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 6, col_names = col_names_song, skip = 4)
+d_2014_suhbaatar <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 7, col_names = col_names_suh, skip = 4)
+d_2014_hanull <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 8, col_names = col_names_han, skip = 4)
+d_2014_chingeltei <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2014_on-2015.xlsx" , sheet = 9, col_names = col_names_ching, skip = 4)
+
+#2015-2016
+d_2015_baganuur <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 1, col_names = col_names_bagan, skip = 4)
+d_2015_bagahangai <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 2, col_names = col_names_bagah, skip = 4)
+d_2015_bayangol <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 3, col_names = col_names_bayang, skip = 4)
+d_2015_bayanzurkh <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 4, col_names = col_names_bayanz, skip = 4)
+d_2015_nalaih <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 5, col_names = col_names_nal, skip = 4)
+d_2015_songinohairhan <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 6, col_names = col_names_song, skip = 4)
+d_2015_suhbaatar <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 7, col_names = col_names_suh, skip = 4)
+d_2015_hanull <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 8, col_names = col_names_han, skip = 4)
+d_2015_chingeltei <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2015_on-2016.xlsx" , sheet = 9, col_names = col_names_ching, skip = 4)
+
+#2016-2017
+d_2016_baganuur <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx" , sheet = 1, col_names = col_names_bagan, skip = 4)
+d_2016_bagahangai <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx"  , sheet = 2, col_names = col_names_bagah, skip = 4)
+d_2016_bayangol <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx" , sheet = 3, col_names = col_names_bayang, skip = 4)
+d_2016_bayanzurkh <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx"  , sheet = 4, col_names = col_names_bayanz, skip = 4)
+d_2016_nalaih <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx"  , sheet = 5, col_names = col_names_nal, skip = 4)
+d_2016_songinohairhan <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx"  , sheet = 6, col_names = col_names_song, skip = 4)
+d_2016_suhbaatar <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx"  , sheet = 7, col_names = col_names_suh, skip = 4)
+d_2016_hanull <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx" , sheet = 8, col_names = col_names_han, skip = 4)
+d_2016_chingeltei <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2016_on-2017.xlsx"  , sheet = 9, col_names = col_names_ching, skip = 4)
+
+#2017-2018
+d_2017_baganuur <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx" , sheet = 1, col_names = col_names_bagan, skip = 4)
+d_2017_bagahangai <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx"  , sheet = 2, col_names = col_names_bagah, skip = 4)
+d_2017_bayangol <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx", sheet = 3, col_names = col_names_bayang, skip = 4)
+d_2017_bayanzurkh <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx" , sheet = 4, col_names = col_names_bayanz, skip = 4)
+d_2017_nalaih <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx", sheet = 5, col_names = col_names_nal, skip = 4)
+d_2017_songinohairhan <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx" , sheet = 6, col_names = col_names_song, skip = 4)
+d_2017_suhbaatar <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx"  , sheet = 7, col_names = col_names_suh, skip = 4)
+d_2017_hanull <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx" , sheet = 8, col_names = col_names_han, skip = 4)
+d_2017_chingeltei <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx" , sheet = 9, col_names = col_names_ching, skip = 4)
+
+#the raw data includes summary lines (rows 6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120) which need to be removed
+d_2011_baganuur <- d_2011_baganuur[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2011_bagahangai <- d_2011_bagahangai[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2011_bayangol <- d_2011_bayangol[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2011_bayanzurkh <- d_2011_bayanzurkh[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2011_nalaih <- d_2011_nalaih[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2011_songinohairhan <- d_2011_songinohairhan[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2011_suhbaatar <- d_2011_suhbaatar[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2011_hanull <- d_2011_hanull[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2011_chingeltei <- d_2011_chingeltei[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+
+d_2014_baganuur <- d_2014_baganuur[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2014_bagahangai <- d_2014_bagahangai[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2014_bayangol <- d_2014_bayangol[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2014_bayanzurkh <- d_2014_bayanzurkh[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2014_nalaih <- d_2014_nalaih[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2014_songinohairhan <- d_2014_songinohairhan[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2014_suhbaatar <- d_2014_suhbaatar[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2014_hanull <- d_2014_hanull[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2014_chingeltei <- d_2014_chingeltei[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+
+d_2015_baganuur <- d_2015_baganuur[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2015_bagahangai <- d_2015_bagahangai[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2015_bayangol <- d_2015_bayangol[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2015_bayanzurkh <- d_2015_bayanzurkh[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2015_nalaih <- d_2015_nalaih[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2015_songinohairhan <- d_2015_songinohairhan[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2015_suhbaatar <- d_2015_suhbaatar[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2015_hanull <- d_2015_hanull[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2015_chingeltei <- d_2015_chingeltei[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+
+d_2016_baganuur <- d_2016_baganuur[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2016_bagahangai <- d_2016_bagahangai[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2016_bayangol <- d_2016_bayangol[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2016_bayanzurkh <- d_2016_bayanzurkh[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2016_nalaih <- d_2016_nalaih[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2016_songinohairhan <- d_2016_songinohairhan[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2016_suhbaatar <- d_2016_suhbaatar[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2016_hanull <- d_2016_hanull[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2016_chingeltei <- d_2016_chingeltei[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+
+d_2017_baganuur <- d_2017_baganuur[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2017_bagahangai <- d_2017_bagahangai[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2017_bayangol <- d_2017_bayangol[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2017_bayanzurkh <- d_2017_bayanzurkh[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2017_nalaih <- d_2017_nalaih[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2017_songinohairhan <- d_2017_songinohairhan[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2017_suhbaatar <- d_2017_suhbaatar[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2017_hanull <- d_2017_hanull[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+d_2017_chingeltei <- d_2017_chingeltei[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
+
+```
+Given their spatial separation from UB, baganuur, bagahangai, and nalaikh, are not going to include study areas. For the others though, let us create plots with age structure for all the khoroos
+
+Plotting total population by khoroo for the latest census (2017)
+```{r}
+
+par(mfrow=c(3,2))
+
+
+plot(d_2017_bayangol$k1_t ~ d_2017_bayangol$age, xlim = c(0,100), ylim = c(0,1000), type = "l", xlab = "Age", ylab = "Population", col = "lightcyan3", main = "Bayangol")
+legend("topright", legend = 1:ncol(d_2017_bayangol), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
+for (i in seq(8,ncol(d_2017_bayangol), 3)){
+  
+  lines(d_2017_bayangol[ ,i], col = sample(rainbow(ncol(d_2017_bayangol))))
+
+}
+
+plot(d_2017_bayanzurkh$k1_t ~ d_2017_bayanzurkh$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Bayanzurkh")
+legend("topright", legend = 1:ncol(d_2017_bayanzurkh), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
+for (i in seq(8,ncol(d_2017_bayanzurkh), 3)){
+  
+  lines(d_2017_bayanzurkh[ ,i], col = sample(rainbow(ncol(d_2017_bayanzurkh))))
+
+}
+
+plot(d_2017_chingeltei$k1_t ~ d_2017_chingeltei$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Chingeltei")
+legend("topright", legend = 1:ncol(d_2017_chingeltei), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
+for (i in seq(8,ncol(d_2017_chingeltei), 3)){
+  
+  lines(d_2017_chingeltei[ ,i], col = sample(rainbow(ncol(d_2017_chingeltei))))
+
+}
+
+plot(d_2017_hanull$k1_t ~ d_2017_hanull$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Hanull")
+legend("topright", legend = 1:ncol(d_2017_hanull), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
+for (i in seq(8,ncol(d_2017_hanull), 3)){
+  
+  lines(d_2017_hanull[ ,i], col = sample(rainbow(ncol(d_2017_hanull))))
+
+}
+
+plot(d_2017_songinohairhan$k1_t ~ d_2017_songinohairhan$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Songinohairhan")
+legend("topright", legend = 1:ncol(d_2017_songinohairhan), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
+for (i in seq(8,ncol(d_2017_songinohairhan), 3)){
+  
+  lines(d_2017_songinohairhan[ ,i], col = sample(rainbow(ncol(d_2017_songinohairhan))))
+
+}
+
+plot(d_2017_suhbaatar$k1_t ~ d_2017_suhbaatar$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Suhbaatar")
+legend("topright", legend = 1:ncol(d_2017_suhbaatar), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
+for (i in seq(8,ncol(d_2017_suhbaatar), 3)){
+  
+  lines(d_2017_suhbaatar[ ,i], col = sample(rainbow(ncol(d_2017_suhbaatar))))
+
+}
+
+```
+
+
+plotting year by changes in total population
+```{r}
+par(mfrow=c(3,2))
+
+plot(d_2017_bayangol$k1_t ~ d_2017_bayangol$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Bayangol", xlab = "Age", ylab = "Population")
+legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1 , cex = 0.5)
+
+for (i in seq(8,ncol(d_2017_bayangol), 3)){
+  
+  lines(d_2017_bayangol$total_t, col = "coral4")
+  lines(d_2016_bayangol$total_t, col = "coral3", lwd = "0.8")
+  lines(d_2015_bayangol$total_t, col = "coral2", lwd = "0.6")
+  lines(d_2014_bayangol$total_t, col = "coral1", lwd = "0.4")
+  lines(d_2011_bayangol$total_t, col = "coral", lwd = "0.2")
+}
+
+plot(d_2017_bayanzurkh$k1_t ~ d_2017_bayanzurkh$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Bayanzurkh", xlab = "Age", ylab = "Population")
+legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1 , cex = 0.5)
+for (i in seq(8,ncol(d_2017_bayanzurkh), 3)){
+  
+  lines(d_2017_bayanzurkh$total_t, col = "coral4")
+  lines(d_2016_bayanzurkh$total_t, col = "coral3", lwd = "0.8")
+  lines(d_2015_bayanzurkh$total_t, col = "coral2", lwd = "0.6")
+  lines(d_2014_bayanzurkh$total_t, col = "coral1", lwd = "0.4")
+  lines(d_2011_bayanzurkh$total_t, col = "coral", lwd = "0.2")
+}
+
+plot(d_2017_chingeltei$k1_t ~ d_2017_chingeltei$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Chingeltei", xlab = "Age", ylab = "Population")
+legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1, cex = 0.5 )
+for (i in seq(8,ncol(d_2017_chingeltei), 3)){
+  
+  lines(d_2017_chingeltei$total_t, col = "coral4")
+  lines(d_2016_chingeltei$total_t, col = "coral3", lwd = "0.8")
+  lines(d_2015_chingeltei$total_t, col = "coral2", lwd = "0.6")
+  lines(d_2014_chingeltei$total_t, col = "coral1", lwd = "0.4")
+  lines(d_2011_chingeltei$total_t, col = "coral", lwd = "0.2")
+}
+
+plot(d_2017_hanull$k1_t ~ d_2017_hanull$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Hanull", xlab = "Age", ylab = "Population")
+legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1, cex = 0.5 )
+for (i in seq(8,ncol(d_2017_hanull), 3)){
+  
+  lines(d_2017_hanull$total_t, col = "coral4")
+  lines(d_2016_hanull$total_t, col = "coral3", lwd = "0.8")
+  lines(d_2015_hanull$total_t, col = "coral2", lwd = "0.6")
+  lines(d_2014_hanull$total_t, col = "coral1", lwd = "0.4")
+  lines(d_2011_hanull$total_t, col = "coral", lwd = "0.2")
+}
+
+plot(d_2017_songinohairhan$k1_t ~ d_2017_songinohairhan$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Songinohairhan", xlab = "Age", ylab = "Population")
+legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1, cex = 0.5 )
+for (i in seq(8,ncol(d_2017_songinohairhan), 3)){
+  
+  lines(d_2017_songinohairhan$total_t, col = "coral4")
+  lines(d_2016_songinohairhan$total_t, col = "coral3", lwd = "0.8")
+  lines(d_2015_songinohairhan$total_t, col = "coral2", lwd = "0.6")
+  lines(d_2014_songinohairhan$total_t, col = "coral1", lwd = "0.4")
+  lines(d_2011_songinohairhan$total_t, col = "coral", lwd = "0.2")
+}
+
+plot(d_2017_suhbaatar$k1_t ~ d_2017_suhbaatar$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Suhbaatar", xlab = "Age", ylab = "Population")
+legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1, cex = 0.5 )
+for (i in seq(8,ncol(d_2017_suhbaatar), 3)){
+  
+  lines(d_2017_suhbaatar$total_t, col = "coral4")
+  lines(d_2016_suhbaatar$total_t, col = "coral3", lwd = "0.8")
+  lines(d_2015_suhbaatar$total_t, col = "coral2", lwd = "0.6")
+  lines(d_2014_suhbaatar$total_t, col = "coral1", lwd = "0.4")
+  lines(d_2011_suhbaatar$total_t, col = "coral", lwd = "0.2")
+}
+
+```
+
+
+
+
+```{r}
+#install/load package to work with raw OSM files
+#install.packages("osmar")
+library("osmar")
+
+url <- "https://download.geofabrik.de/asia/mongolia.html"
+file <- "mongolia-latest.osm.pbf"
+download.file(url, file)
+
+api <- osmsource_api()
+box <- center_bbox(106.6672, 47.8611, 700, 700)
+ub_b <- get_osm(box, api)
+#with above, there seems to be something wrong with the website actually...
+
+
+src <- osmsource_osmosis(file = file)
+ub_bbox <- center_bbox(106.9057, 47.8864, 700, 700)
+ub <- get_osm(ub_bbox, src)
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+           
