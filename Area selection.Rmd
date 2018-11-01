@@ -285,11 +285,18 @@ download.file(url, file)
 system("bzip2 -d mongolia-latest.osm.bz2")
 
 src <- osmsource_osmosis(file = "mongolia-latest.osm", osmosis = "osmosis")
-ub_bbox <- center_bbox(106.9057, 47.8864, 10000, 10000)
+ub_bbox <- corner_bbox(106.5926, 47.6785, 107.5861, 48.1213)
 ub <- get_osm(ub_bbox, src)
 
 
+#plot entire object
+plot(ub,
+     way_args = list(cex = 0.1),
+     node_args = list(pch = 20, cex = 0.1)
+     )
 
+#just nodes
+plot_nodes(ub)
 
 
 
