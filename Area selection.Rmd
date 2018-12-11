@@ -87,6 +87,19 @@ d_2017_hanull <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2
 d_2017_chingeltei <- read_xlsx("khun_amiin_too_neg_nasnii_buleg_khoroogoor_2017_on-2018.xlsx" , sheet = 9, col_names = col_names_ching, skip = 4)
 
 #the raw data includes summary lines (rows 6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120) which need to be removed
+
+
+#want something like this: 
+#city_files <- list.files('~/Documents/R/Data', pattern="USPTO_100_inventors*")
+#years <- 2000:2013
+
+
+years <- c(2011, 2014:2017)
+
+
+
+
+
 d_2011_baganuur <- d_2011_baganuur[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
 d_2011_bagahangai <- d_2011_bagahangai[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
 d_2011_bayangol <- d_2011_bayangol[-c(6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120), ]
@@ -142,57 +155,24 @@ Given their spatial separation from UB, baganuur, bagahangai, and nalaikh, are n
 
 Plotting total population by khoroo for the latest census (2017)
 ```{r}
+pop_plot <- function(district, n){
+  
+  plot(district$k1_t ~ district$age, xlim = c(0,100), ylim = c(0,1000), type = "l", xlab = "Age", ylab = "Population", col = "lightcyan3", main = n )
+  legend("topright", legend = 1:ncol(district), col = 1:ncol(district), lty = 1, cex = 0.2)
+  
+  for (i in seq(8,ncol(district), 3)){
+    lines(district[ ,i], col = sample(rainbow(ncol(district))))
+  }
+}
 
 par(mfrow=c(3,2))
 
-
-plot(d_2017_bayangol$k1_t ~ d_2017_bayangol$age, xlim = c(0,100), ylim = c(0,1000), type = "l", xlab = "Age", ylab = "Population", col = "lightcyan3", main = "Bayangol")
-legend("topright", legend = 1:ncol(d_2017_bayangol), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
-for (i in seq(8,ncol(d_2017_bayangol), 3)){
-  
-  lines(d_2017_bayangol[ ,i], col = sample(rainbow(ncol(d_2017_bayangol))))
-
-}
-
-plot(d_2017_bayanzurkh$k1_t ~ d_2017_bayanzurkh$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Bayanzurkh")
-legend("topright", legend = 1:ncol(d_2017_bayanzurkh), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
-for (i in seq(8,ncol(d_2017_bayanzurkh), 3)){
-  
-  lines(d_2017_bayanzurkh[ ,i], col = sample(rainbow(ncol(d_2017_bayanzurkh))))
-
-}
-
-plot(d_2017_chingeltei$k1_t ~ d_2017_chingeltei$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Chingeltei")
-legend("topright", legend = 1:ncol(d_2017_chingeltei), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
-for (i in seq(8,ncol(d_2017_chingeltei), 3)){
-  
-  lines(d_2017_chingeltei[ ,i], col = sample(rainbow(ncol(d_2017_chingeltei))))
-
-}
-
-plot(d_2017_hanull$k1_t ~ d_2017_hanull$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Hanull")
-legend("topright", legend = 1:ncol(d_2017_hanull), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
-for (i in seq(8,ncol(d_2017_hanull), 3)){
-  
-  lines(d_2017_hanull[ ,i], col = sample(rainbow(ncol(d_2017_hanull))))
-
-}
-
-plot(d_2017_songinohairhan$k1_t ~ d_2017_songinohairhan$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Songinohairhan")
-legend("topright", legend = 1:ncol(d_2017_songinohairhan), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
-for (i in seq(8,ncol(d_2017_songinohairhan), 3)){
-  
-  lines(d_2017_songinohairhan[ ,i], col = sample(rainbow(ncol(d_2017_songinohairhan))))
-
-}
-
-plot(d_2017_suhbaatar$k1_t ~ d_2017_suhbaatar$age, xlim = c(0,100), ylim = c(0,1000), type = "l", col = "lightcyan3", xlab = "Age", ylab = "Population", main = "Suhbaatar")
-legend("topright", legend = 1:ncol(d_2017_suhbaatar), col = 1:ncol(d_2017_bayangol), lty = 1, cex = 0.2)
-for (i in seq(8,ncol(d_2017_suhbaatar), 3)){
-  
-  lines(d_2017_suhbaatar[ ,i], col = sample(rainbow(ncol(d_2017_suhbaatar))))
-
-}
+pop_plot(d_2017_bayangol, n = "Bayangol")
+pop_plot(d_2017_bayanzurkh, n = "Bayazurkh")
+pop_plot(d_2017_chingeltei, n = "Chingeltei")
+pop_plot(d_2017_hanull, n = "Hanull")
+pop_plot(d_2017_songinohairhan, n = "Songinohairhan")
+pop_plot(d_2017_suhbaatar, n = "Suhbaatar")
 
 ```
 
@@ -297,14 +277,44 @@ plot(ub,
 
 #just nodes
 plot_nodes(ub)
+```
+
+I'm not loving the osmar package, lets try some different things
+downloaded some landuse data from the interwebs, lets try to plot it
+
+```{r}
+#get all the fun spatial packages suggested by visualising spatial data tutorial
+
+x <- c("ggmap", "rgdal", "rgeos", "maptools", "dplyr", "tidyr", "tmap")
+#install.packages(x) # warning: uncommenting this may take a number of minutes
+lapply(x, library, character.only = TRUE) # load the required packages
+
+landuse <- readOGR(dsn = "./landuse", layer = "landuse")
+
+plot(landuse, xlim = c(106.5509, 107.5444), ylim = c(47.6875, 48.1303)) #coordinates of UB
+
+```
+I mean, this doesn't really give us much. Lets try working with some other files I found on the interwebs.
+
+```{r}
+buildings <- readOGR(dsn = "./buildings", layer = "hotosm_mng_buildings_polygons")
+
+plot(buildings, xlim = c(106.5509, 107.5444), ylim = c(47.6875, 48.1303)) #coordinates of UB
+
+#let's get a small area in UB to have better look at the resolution
+
+plot(buildings, xlim = c(106.9151, 106.9461), ylim = c(47.9386, 47.9524))
+
+#maybe even smaller
+
+plot(buildings, xlim = c(106.93556, 106.94333), ylim = c(47.94740, 47.95086))
 
 
+ger <- buildings$building == "ger"
 
-
-
-
-
-
+plot(buildings[ger, ], xlim = c(106.5509, 107.5444), ylim = c(47.6875, 48.1303)) #coordinates of UB
+par(new = FALSE)
+plot(buildings, xlim = c(106.5509, 107.5444), ylim = c(47.6875, 48.1303), col = "red") #why is this not coming up as red? 
 ```
 
 
