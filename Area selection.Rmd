@@ -155,13 +155,15 @@ Given their spatial separation from UB, baganuur, bagahangai, and nalaikh, are n
 
 Plotting total population by khoroo for the latest census (2017)
 ```{r}
+#wanting to color this by heat.colors because districts are number outwards from the center - i.e. higher number districts are generally further out
+
 pop_plot <- function(district, n){
   
-  plot(district$k1_t ~ district$age, xlim = c(0,100), ylim = c(0,1000), type = "l", xlab = "Age", ylab = "Population", col = "lightcyan3", main = n )
-  legend("topright", legend = 1:ncol(district), col = 1:ncol(district), lty = 1, cex = 0.2)
+  plot(district$k1_t ~ district$age, xlim = c(0,100), ylim = c(0,1000), type = "l", xlab = "Age", ylab = "Population", col = heat.colors(1), main = n )
+  legend("topright", legend = colnames(district[ ,seq(5,ncol(district), 3)]), col = heat.colors(((ncol(district)-4)/3)), lty = 1, cex = 0.3)
   
   for (i in seq(8,ncol(district), 3)){
-    lines(district[ ,i], col = sample(rainbow(ncol(district))))
+    lines(district[ ,i], col = sample(heat.colors(ncol(district))))
   }
 }
 
@@ -174,79 +176,33 @@ pop_plot(d_2017_hanull, n = "Hanull")
 pop_plot(d_2017_songinohairhan, n = "Songinohairhan")
 pop_plot(d_2017_suhbaatar, n = "Suhbaatar")
 
+#so age of districts is roughly going from red to yellow, from the jumble it doesn't seem like some crazy demographic shifts are happening between khoroos according to age 
+
 ```
 
 
 plotting year by changes in total population
 ```{r}
+change_plot <- function(d2017, d2016, d2015, d2014, d2011, n){
+  
+  plot(d2017$total_t ~ d2017$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = n, xlab = "Age", ylab = "Population")
+  legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1 , cex = 0.5)
+  
+  for (i in seq(8,ncol(d_2017_bayangol), 3)){
+    lines(d2016$total_t, col = "coral3", lwd = "0.8")
+    lines(d2015$total_t, col = "coral2", lwd = "0.6")
+    lines(d2014$total_t, col = "coral1", lwd = "0.4")
+    lines(d2011$total_t, col = "coral", lwd = "0.2")
+  }
+}
+
 par(mfrow=c(3,2))
-
-plot(d_2017_bayangol$k1_t ~ d_2017_bayangol$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Bayangol", xlab = "Age", ylab = "Population")
-legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1 , cex = 0.5)
-
-for (i in seq(8,ncol(d_2017_bayangol), 3)){
-  
-  lines(d_2017_bayangol$total_t, col = "coral4")
-  lines(d_2016_bayangol$total_t, col = "coral3", lwd = "0.8")
-  lines(d_2015_bayangol$total_t, col = "coral2", lwd = "0.6")
-  lines(d_2014_bayangol$total_t, col = "coral1", lwd = "0.4")
-  lines(d_2011_bayangol$total_t, col = "coral", lwd = "0.2")
-}
-
-plot(d_2017_bayanzurkh$k1_t ~ d_2017_bayanzurkh$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Bayanzurkh", xlab = "Age", ylab = "Population")
-legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1 , cex = 0.5)
-for (i in seq(8,ncol(d_2017_bayanzurkh), 3)){
-  
-  lines(d_2017_bayanzurkh$total_t, col = "coral4")
-  lines(d_2016_bayanzurkh$total_t, col = "coral3", lwd = "0.8")
-  lines(d_2015_bayanzurkh$total_t, col = "coral2", lwd = "0.6")
-  lines(d_2014_bayanzurkh$total_t, col = "coral1", lwd = "0.4")
-  lines(d_2011_bayanzurkh$total_t, col = "coral", lwd = "0.2")
-}
-
-plot(d_2017_chingeltei$k1_t ~ d_2017_chingeltei$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Chingeltei", xlab = "Age", ylab = "Population")
-legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1, cex = 0.5 )
-for (i in seq(8,ncol(d_2017_chingeltei), 3)){
-  
-  lines(d_2017_chingeltei$total_t, col = "coral4")
-  lines(d_2016_chingeltei$total_t, col = "coral3", lwd = "0.8")
-  lines(d_2015_chingeltei$total_t, col = "coral2", lwd = "0.6")
-  lines(d_2014_chingeltei$total_t, col = "coral1", lwd = "0.4")
-  lines(d_2011_chingeltei$total_t, col = "coral", lwd = "0.2")
-}
-
-plot(d_2017_hanull$k1_t ~ d_2017_hanull$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Hanull", xlab = "Age", ylab = "Population")
-legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1, cex = 0.5 )
-for (i in seq(8,ncol(d_2017_hanull), 3)){
-  
-  lines(d_2017_hanull$total_t, col = "coral4")
-  lines(d_2016_hanull$total_t, col = "coral3", lwd = "0.8")
-  lines(d_2015_hanull$total_t, col = "coral2", lwd = "0.6")
-  lines(d_2014_hanull$total_t, col = "coral1", lwd = "0.4")
-  lines(d_2011_hanull$total_t, col = "coral", lwd = "0.2")
-}
-
-plot(d_2017_songinohairhan$k1_t ~ d_2017_songinohairhan$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Songinohairhan", xlab = "Age", ylab = "Population")
-legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1, cex = 0.5 )
-for (i in seq(8,ncol(d_2017_songinohairhan), 3)){
-  
-  lines(d_2017_songinohairhan$total_t, col = "coral4")
-  lines(d_2016_songinohairhan$total_t, col = "coral3", lwd = "0.8")
-  lines(d_2015_songinohairhan$total_t, col = "coral2", lwd = "0.6")
-  lines(d_2014_songinohairhan$total_t, col = "coral1", lwd = "0.4")
-  lines(d_2011_songinohairhan$total_t, col = "coral", lwd = "0.2")
-}
-
-plot(d_2017_suhbaatar$k1_t ~ d_2017_suhbaatar$age, xlim = c(0,100), ylim = c(0,8000), type = "l", col = "coral4", main  = "Suhbaatar", xlab = "Age", ylab = "Population")
-legend(80, 8000, legend = c("2017", "2016", "2015", "2014", "2011"), col = c("coral4", "coral3", "coral2", "coral1", "coral"), lty=1, cex = 0.5 )
-for (i in seq(8,ncol(d_2017_suhbaatar), 3)){
-  
-  lines(d_2017_suhbaatar$total_t, col = "coral4")
-  lines(d_2016_suhbaatar$total_t, col = "coral3", lwd = "0.8")
-  lines(d_2015_suhbaatar$total_t, col = "coral2", lwd = "0.6")
-  lines(d_2014_suhbaatar$total_t, col = "coral1", lwd = "0.4")
-  lines(d_2011_suhbaatar$total_t, col = "coral", lwd = "0.2")
-}
+change_plot(d_2017_bayangol, d_2016_bayangol, d_2015_bayangol, d_2014_bayangol, d_2011_bayangol, n = "Bayangol")
+change_plot(d_2017_bayanzurkh, d_2016_bayanzurkh, d_2015_bayanzurkh, d_2014_bayanzurkh, d_2011_bayanzurkh, n = "Bayanzurkh")
+change_plot(d_2017_chingeltei, d_2016_chingeltei, d_2015_chingeltei, d_2014_chingeltei, d_2011_chingeltei, n = "Chingeltei")
+change_plot(d_2017_hanull, d_2016_hanull, d_2015_hanull, d_2014_hanull, d_2011_hanull, n = "Hanull")
+change_plot(d_2017_songinohairhan, d_2016_songinohairhan, d_2015_songinohairhan, d_2014_songinohairhan, d_2011_songinohairhan, n = "Songinohairhan")
+change_plot(d_2017_suhbaatar, d_2016_suhbaatar, d_2015_suhbaatar, d_2014_suhbaatar, d_2011_suhbaatar, n = "Suhbaatar")
 
 ```
 
