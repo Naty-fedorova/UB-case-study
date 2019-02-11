@@ -1,0 +1,113 @@
+---
+title: "DAG and Simulation"
+author: "Natalia Fedorova"
+date: "2/5/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This document exists to trace the planning stages of the UB case study. The procedure is first developing the causal model and then describing this with the help of a DAG. The DAG helps make explicit direct, causal, and conditional relationships between variables and thus can inform our data analysis and help with data collection prioritization. 
+
+
+Initialization
+```{r}
+install.packages("rethinking")
+library(rethinking)
+install.packages("dagitty")
+library(dagitty)
+```
+
+
+
+
+
+The DAG
+```{r}
+ub_dag <- dagitty( "dag {
+          wealth -> loc
+          wealth -> land_own
+          wealth -> house_invst
+          land_own -> house_invst
+          soc_cap -> res_length
+          res_length <-> land_own
+          res_length -> intend_stay
+          intend_stay -> house_invst
+          intend_stay <-> land_own
+          house_invst -> house_type
+}")
+
+coordinates(ub_dag) <- list( x = c(wealth = 0, loc = 1, land_own = 1, house_invst = 1, house_type = 1, soc_cap = 2, res_length = 2, intend_stay = 2),
+                             y = c(wealth = 1, loc = 1, soc_cap = 1, land_own = 2, res_length = 2, intend_stay = 3, house_invst = 4, house_type = 5))
+
+plot(ub_dag)
+
+
+impliedConditionalIndependencies(ub_dag)
+```
+
+Part of figuring out the DAG is writing out the functional relationships between variables:
+wealth is independent from everything
+location is a function of wealth and social capital
+social capital is independent from everything
+land ownership is a function of welath and residence length
+residence length is a function of social capital and land ownership
+intended stay is a function of land ownership and residence length
+house investment is a function of wealth, land ownership, and intended stay
+house type is a function of house investment (and residence length maybe?)
+
+
+The Variables
+
+wealth: continous, measured as monthly income (rounded), it is quite low, let's take UB's average salary in the mean (although this isn't really right)
+location: gps coordinate, but actually measured as distance from center in km (appropriate distribution?)
+social capital: kin in UB, binary
+land ownership: categorical, yes, no, ownded by kin
+residence length: measured in months, since the ger districts are not that old this should be rnorm around 15 years, let's say
+intended stay: measured in months (?or should we do this in categories?) 
+house investment: continous, sum of upfront cost + annual upkeep * years lived
+house type: categorical, ger, bashin, house (remember this is only a feature of primary residence atm)
+
+
+
+The Simulation
+```{r}
+# population
+n <- 100
+
+# parameters
+# atm these are just 0, because I'm not weighting their strength, but it is just to have each arrow have a parameter
+b_WLo <- 0 #direct wealth on loc
+b_WLa <- 0 #direct wealth on land_own
+b_WIv <- 0 #direct wealth on house_invst
+b_SR <- 0 #direct soc_cap on res_length
+b_RIn <-0 #direct res_length on intend_stay
+b_LaIv <- 0 #direct land_own on house_invst
+b_LaR <- 0 #bidirect land_own on res_length ?
+b_LaIn <- 0 #bidirect land_own on intend_stay ?
+b_InIv <- 0 #direct intend_stay on house_invst
+b_IH <- 0 #direct house_invst on house_type
+
+
+# totals
+b_W <- 0 #effect of wealth
+b_La <- 0 #effect of land_own
+b_R <- 0 #effect of res_length
+b_In <- 0 #effect of intend_stay
+
+
+# data
+wealth <- rnorm(n, 400, 100)
+location <- rnorm(n, b_WLo*wealth)
+soc_cap <- rbinom(n, 1, 0.5)
+land_own <- sample(c("yes", "no", "kin"), n, replace = TRUE) #should also be a function of wealth, res_length, and intend_stay
+res_length <- rnorm(n, b_SR*soc_cap) #should also be dependent on land_own but since that's not numeric... 
+intend_stay <- rnorm(n, b_RIn*res_length) #should also be dependent on land_own but since that's not numeric... 
+house_invst <- rnorm(n, b_WIv*wealth + b_InIv*intend_stay) #should also be dependent on land_own but since that's not numeric... 
+house_type <- sample(c("ger", "bashin", "house"), n, replace = TRUE) #should also be dependent on house_invst
+
+
+```
+
