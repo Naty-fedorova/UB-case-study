@@ -58,10 +58,15 @@ intended stay is a function of land ownership and residence length
 house investment is a function of wealth, land ownership, and intended stay
 house type is a function of house investment (and residence length maybe?)
 
+Mediation in the DAG
+
+An important mediation is postulated in relation to land ownership. Residence length has a direct and strong effect on land ownership, because the cost of land is not prohibitive, so given enough time even poorer people can establish ownership. On the flip side, being a new arrival preculed you from land ownership no matter how rich you are. As such, the effect of wealth is mediated by residence length. On the other hand, intended stay is mediated by wealth. Wanted to stay longterm has a positive impact on land ownership only if the person has enough resources to buy property. This must be written into the simulation process though parameter dependence - the strength of wealth is dependent on residence length, and the strength of intended stay is dependent on wealth. 
+
+
 
 The Variables
 
-wealth: continous, measured as monthly income (rounded), it is quite low, let's take UB's average salary in the mean (although this isn't really right)
+wealth: continous, measured as monthly income (rounded), it is quite low, let's take UB's average salary in the mean (although this isn't really right). Important point is that this is wealth AT dwelling construction (which could be some years back), so it is more like past wealth
 location: gps coordinate, but actually measured as distance from center in km (appropriate distribution?)
 social capital: kin in UB, binary
 land ownership: categorical, yes, no, ownded by kin
@@ -80,13 +85,13 @@ n <- 100
 # parameters
 # atm these are just 0, because I'm not weighting their strength, but it is just to have each arrow have a parameter
 b_WLo <- 0 #direct wealth on loc
-b_WLa <- 0 #direct wealth on land_own
+b_WLa <- 0 #direct wealth on land_own, this should be mediated by res_length
 b_WIv <- 0 #direct wealth on house_invst
 b_SR <- 0 #direct soc_cap on res_length
 b_RIn <-0 #direct res_length on intend_stay
 b_LaIv <- 0 #direct land_own on house_invst
 b_LaR <- 0 #bidirect land_own on res_length ?
-b_LaIn <- 0 #bidirect land_own on intend_stay ?
+b_LaIn <- 0 #bidirect land_own on intend_stay ? This should be mediated by wealth
 b_InIv <- 0 #direct intend_stay on house_invst
 b_IH <- 0 #direct house_invst on house_type
 
