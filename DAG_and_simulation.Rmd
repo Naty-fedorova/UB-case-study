@@ -20,7 +20,25 @@ install.packages("dagitty")
 library(dagitty)
 ```
 
+The ABM
 
+```{r}
+#first want to simulate a bunch of agents, that have a wealth value drawn from a normal distribution, and a binary yes/no variable as to whether they have family present
+
+#100 agents
+agents <- 1:100
+wealth <- rnorm(agents, mean = 10, sd = 2)
+fam <- rbinom(agents, size = 1, prob = 0.5) #"success" is presence of fam, prob might even be higher than a half
+
+#step 1 - find land
+#wealth increases likelihood of finding land
+#fam can be lived with
+
+
+
+
+
+```
 
 
 
