@@ -1,6 +1,6 @@
 library(rethinking)
 
-
+# Functions ####
 get_preference_for_migrant <- function(capital, intend_stay) {
   # This function decided a migrants preference between staying with family, or squatting a empty plot 
   # based on their capital and intended stay
@@ -60,7 +60,7 @@ get_destination_family <- function(my_fam_id, plot_ids, plot_pop, plot_capacity,
 
   # check if family plot is under capacity, if yes, move there, otherwise destination = 0 
   if ( length(fam_destinations)>0 ) {
-    fam_dest_indices <- which( plot_pop[fam_destinations] < plot_capacity )
+    fam_dest_indices <- which(plot_pop[fam_destinations] < plot_capacity )
     if (length(fam_dest_indices) > 0) {
       if (length(fam_dest_indices) == 1)
         return(fam_destinations[fam_dest_indices])
@@ -73,18 +73,83 @@ get_destination_family <- function(my_fam_id, plot_ids, plot_pop, plot_capacity,
   
 get_destination_squat <- function(plot_pop) {
   # This function gets the destination (index of plot) of empty plot
+  # squatting is a stochastic process; even if land is free, you might not find it
   # param plot_pop: vector containing plot population size
   # return: index of plot, or 0 if no plots free
   
   empty_destinations <- which(plot_pop == 0)
   if (length(empty_destinations) > 0) {
-    if (length(empty_destinations) == 1)
-      return(empty_destinations)
-    else
-      return(sample(empty_destinations, size=1))
+    
+    # chance of finding land, even when it is available
+    if(rbinom(1, 1, 0.7) == 1){
+      
+      if (length(empty_destinations) == 1)
+        return(empty_destinations)
+      else
+        return(sample(empty_destinations, size=1))
+    }
   }
   return(0)
 }
+
+finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
+  # This function carries out the land finding part of the simulation
+  # based on preferences derived from capital and intended stay
+  # agents either first try family, or first try to squat
+  # param hh_index: index of the hh_ids under question
+  # param hh_df: dataframe of household info
+  # param plot_ids: matrix of plots
+  # param plot_pop: vector of plot populations
+  # param plot_capacity: max plot capacity
+  # return: hh_df, plot_ids, plot_pop
+  
+  destination <- 0
+  # preference dictates order of choice between empty or family plot
+  preference_of_stay <- get_preference_for_migrant(hh_df$capital[hh_index], hh_df$intend_stay[hh_index])
+  
+  if (preference_of_stay == "family") {
+    destination <- get_destination_family( hh_df$fam_id[hh_index], plot_ids, plot_pop, plot_capacity, hh_df)
+    if ( destination==0 ) {
+      destination <- get_destination_squat(plot_pop)
+    }
+  }
+  else { # (preference_of_stay == "squat") 
+    destination <- get_destination_squat(plot_pop)
+    if(destination==0){
+      destination <- get_destination_family(hh_df$fam_id[hh_index], plot_ids, plot_pop, plot_capacity, hh_df)
+    }
+  }
+  
+  # occupy!
+  if ( destination > 0 ) {
+    plot_pop[destination] <- plot_pop[destination] + 1
+    if ( plot_pop[destination] > plot_capacity ) {
+      print("##### THIS SHOULD NEVER HAPPEN! #####")
+      print((plot_ids))
+      print(destination)
+      print(hh_df$hh_id[hh_index])
+      print(plot_pop)
+      print(hh_df)
+    }
+    plot_ids[destination , plot_pop[destination]] <- hh_df$hh_id[hh_index]
+    
+    #update hh_df to show which agents are now in the environment/occupying plots
+    hh_df$in_env[hh_index] <- 1
+  }
+  else {
+    #remove them from environment, can never come back, they ded
+    hh_df$in_env[hh_index] <- 0
+    print(c("The possible plots are full for id: ", hh_df$hh_id[hh_index]))
+  }
+  return(
+    list(
+      hh_df = hh_df,
+      plot_ids = plot_ids,
+      plot_pop = plot_pop
+    )
+  )
+}
+
 
 sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , plot_cost=1 , N_fams=20) {
   # Master function for ABM
@@ -111,68 +176,60 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , pl
   hh_df <- data.frame(hh_id, fam_id, capital, intend_stay, residence_length_plot, residence_length_total, in_env, house_invest)
   
   # init plots
-  plot_pop <- rep( 0 , N_plots ) #TODO remove this, can just use length of plot_ids row
+  plot_pop <- rep( 0 , N_plots )
   plot_own <- rep( 0 , N_plots )
   plot_house <- rep( 0 , N_plots )
-  plot_ids <- matrix( 0 , nrow=N_plots , ncol=plot_capacity ) #matrix of plots to be filled with hh ids
+  plot_ids <- matrix( 0 , nrow=N_plots , ncol=plot_capacity ) #matrix of plots to be filled with hh ids, plot_id index works as plot id
   
   # loop
-  for ( t in 1:tmax ) {
+  for (t in 1:tmax){
     print(c("Iteration ", t))
     
-    #TODO 
-    # stochastic change to capital at start of each time step
-    # remove squatters that did not buy land
+    # internal migration
+    # find agents that need to move
+    # also their family members
+    # remove them from plot id and update plot pop
+    # go through finding land section
     
+    # find plots of squatters
+    squatter_plot_index <- which(plot_ids[,1] > 0 & plot_own == 0)
+    
+    # get squatter and fam ID so they can move later
+    squatter_id <- c(plot_ids[squatter_plot_index], plot_ids[,2][squatter_plot_index])
+
+    # remove squatters (and family) from plots and update plot pop
+    plot_ids[squatter_plot_index] <- 0
+    
+    # and family
+    plot_ids[,2][squatter_plot_index] <- 0
+    
+    # update plot_pop
+    plot_pop[squatter_plot_index] <- 0
+    
+    # update residence length plot
+    hh_df$residence_length_plot[squatter_id] <- 0
+    
+    #internal migration for newly displaced squatters 
+    
+    
+    
+    # inmigration
     # finding land
-    for ( i in 1:N_migrants ) {
+    for (i in 1:N_migrants){
       #calculate index so household data.frame can be indexed
       hh_index = (t-1)*N_migrants + i
-      destination <- 0
       
-      # preference dictates order of choice between empty or family plot
-      preference_of_stay <- get_preference_for_migrant(hh_df$capital[hh_index], hh_df$intend_stay[hh_index])
-      
-      if (preference_of_stay == "family") {
-        destination <- get_destination_family( hh_df$fam_id[hh_index], plot_ids, plot_pop, plot_capacity, hh_df)
-        if ( destination==0 ) {
-          destination <- get_destination_squat(plot_pop)
-        }
-      }
-      else { # (preference_of_stay == "squat") 
-        destination <- get_destination_squat(plot_pop)
-        if(destination==0){
-          destination <- get_destination_family(hh_df$fam_id[hh_index], plot_ids, plot_pop, plot_capacity, hh_df)
-        }
-      }
-      
-      # occupy!
-      if ( destination > 0 ) {
-        plot_pop[destination] <- plot_pop[destination] + 1
-        if ( plot_pop[destination] > plot_capacity ) {
-          print("##### THIS SHOULD NEVER HAPPEN! #####")
-          print((plot_ids))
-          print(destination)
-          print(hh_df$hh_id[hh_index])
-          print(plot_pop)
-          print(hh_df)
-        }
-        plot_ids[destination , plot_pop[destination]] <- hh_df$hh_id[hh_index]
-        
-        #update hh_df to show which agents are now in the environment/occupying plots
-        hh_df$in_env[hh_index] <- 1
-      }
-      else {
-        print(c("The possible plots are full for id: ", hh_df$hh_id[hh_index]))
-      }
+      l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)
+      hh_df <- l[["hh_df"]]
+      plot_ids <- l[["plot_ids"]]
+      plot_pop <- l[["plot_pop"]]
     }# finding land
     
-    # buying land
+    # buying land ####
     # if live on available land from previous round, and have sufficient capital - buy land
-    # if live on family land already for *some time*, look for new land
     
     #go through plots
-    for(i in 1:nrow(plot_ids)){
+    for (i in 1:nrow(plot_ids)){
       # get own occupied patches
       if(plot_ids[i,1] > 0){
         # if their capital is more than 0, they can buy the land (stochastic)
@@ -183,12 +240,12 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , pl
       
     }
     
-    # building home
+    # building home ####
     # if live on family land stay in ger, so ignore
     # if live on own land, can build
     # investment proportional to capital and intended stay
     # min capital needed for building house:0 
-    for(i in 1:length(plot_own)){
+    for (i in 1:length(plot_own)){
       if(plot_own[i] == 1){
         
         if(plot_house[i] == 0){
@@ -203,12 +260,24 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , pl
     
 
     
+    #index of agents that are in the environment
+    hh_present <- which(hh_df$in_env == 1)
+    
+    # update residence time
+    # for agents that are in the environment, residence +1
+    for (i in 1:length(hh_present)){
+      hh_df$residence_length_total[hh_present][i] <- hh_df$residence_length_total[hh_present][i] + 1
+      
+      # update plot residence length
+      hh_df$residence_length_plot[hh_present][i] <- hh_df$residence_length_plot[hh_present][i] + 1
+    }
+    
+    # stochastic shock to capital
+    # city life is a lottery
+    for (i in 1:length(hh_present)){
+      hh_df$capital[hh_present][i] <- hh_df$capital[hh_present][i] + rnorm(1, 0, 0.25) 
+    }
 
-    
-    
-    
-    #TODO end of each timestep - update total residence
-    #TODO can only squat for one timestep
     
   }#t
   
@@ -224,3 +293,8 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , pl
 }
 
 s <- sim_ub(tmax=10,N_plots=100)
+
+# TODO 
+# track migration parameter
+# if live on family land already for *some time*, look for new land
+
