@@ -92,6 +92,8 @@ get_destination_squat <- function(plot_pop) {
   return(0)
 }
 
+get_total_migration <- function()
+
 finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
   # This function carries out the land finding part of the simulation
   # based on preferences derived from capital and intended stay
@@ -133,12 +135,19 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
     }
     plot_ids[destination , plot_pop[destination]] <- hh_df$hh_id[hh_index]
     
-    #update hh_df to show which agents are now in the environment/occupying plots
+    # update total mig
+    hh_df$total_mig[hh_index] <- hh_df$total_mig[hh_index] + 1
+    
+    # update hh_df to show which agents are now in the environment/occupying plots
     hh_df$in_env[hh_index] <- 1
   }
   else {
-    #remove them from environment, can never come back, they ded
+    # remove them from environment, can never come back, they ded
     hh_df$in_env[hh_index] <- 0
+    
+    # update total mig
+    hh_df$total_mig[hh_index] <- hh_df$total_mig[hh_index] + 1
+    
     print(c("The possible plots are full for id: ", hh_df$hh_id[hh_index]))
   }
   return(
@@ -150,7 +159,7 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
   )
 }
 
-sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , N_fams=20) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams=20) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
@@ -169,10 +178,11 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , N_
   intend_stay <- rnorm(N_hh)
   residence_length_plot <- rep(0, times = N_hh)
   residence_length_total <- rep(0, times = N_hh)
-  in_env <- rep(0, time = N_hh)
-  house_invest <- rep(0, time = N_hh)
+  in_env <- rep(0, times = N_hh)
+  house_invest <- rep(0, times = N_hh)
+  total_mig <- rep(0, times = N_hh)
   
-  hh_df <- data.frame(hh_id, fam_id, capital, intend_stay, residence_length_plot, residence_length_total, in_env, house_invest)
+  hh_df <- data.frame(hh_id, fam_id, capital, intend_stay, residence_length_plot, residence_length_total, total_mig, in_env, house_invest)
   
   # init plots
   plot_pop <- rep( 0 , N_plots )
@@ -187,7 +197,7 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , N_
     print(c("Iteration ", t))
     
     # internal migration ####
-    # find squatters and fam on their plot, relocate
+    # find squatters (and fam on their plot), relocate
     # find plots of squatters
     squatter_plot_index <- which(plot_ids[,1] > 0 & plot_own == 0)
     
@@ -198,7 +208,7 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , N_
       #remove 0s from squatter_ids
       squatter_id <- squatter_id[squatter_id != 0]
       
-      # remove squatters from plots and update plot pop
+      # remove squatters from plots and update plot ids
       plot_ids[squatter_plot_index] <- 0
       
       # and family
@@ -237,14 +247,16 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , N_
           if(rbinom(1, 1, 0.7) == 1){ #stochastic
             destination <- get_destination_squat(plot_pop)
             if ( destination > 0 ) {
-              # if they have found a new plot, remove them from all prior
+              # if they have found a new plot, remove them from all prior 
               plot_ids[,2][visitor_plots[i]] <- 0
               plot_pop[visitor_plots[i]] <- plot_pop[visitor_plots[i]] - 1
               hh_df$residence_length_plot[visitor_ids[i]] <- 0
               
-              #put them in new plot
+              
+              #put them in new plot & update total mig
               plot_pop[destination] <- plot_pop[destination] + 1
-              plot_ids[destination , plot_pop[destination]] <- hh_df$hh_id[hh_index]
+              plot_ids[destination] <- hh_df$hh_id[visitor_ids[i]]
+              hh_df$total_mig[visitor_ids[i]] <-  hh_df$total_mig[visitor_ids] + 1
             }
           }
         }
@@ -332,7 +344,10 @@ sim_ub <- function( tmax=10 , N_plots=100 , N_migrants=20 , plot_capacity=2 , N_
 s <- sim_ub(tmax=10,N_plots=100)
 
 # TODO 
-# track migration parameter
+# agents can be squatters and visitors in one timestep
 # should land buying also be affected by intended stay?
+# sunk costs? will this emerge out of the model? how can I test it?
+# atm shocks to capital are the same for everyone, but realistically shouldn't be
+
 
 
