@@ -92,8 +92,6 @@ get_destination_squat <- function(plot_pop) {
   return(0)
 }
 
-get_total_migration <- function()
-
 finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
   # This function carries out the land finding part of the simulation
   # based on preferences derived from capital and intended stay
@@ -256,7 +254,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
               #put them in new plot & update total mig
               plot_pop[destination] <- plot_pop[destination] + 1
               plot_ids[destination] <- hh_df$hh_id[visitor_ids[i]]
-              hh_df$total_mig[visitor_ids[i]] <-  hh_df$total_mig[visitor_ids] + 1
+              hh_df$total_mig[visitor_ids[i]] <-  hh_df$total_mig[visitor_ids[i]] + 1
             }
           }
         }
