@@ -1,3 +1,5 @@
+library(rethinking)
+
 # regress house_invest on .
 
 d <- s$hh_df

@@ -346,6 +346,7 @@ s <- sim_ub(tmax=10,N_plots=100)
 # should land buying also be affected by intended stay?
 # sunk costs? will this emerge out of the model? how can I test it?
 # atm shocks to capital are the same for everyone, but realistically shouldn't be
+# track plot id in hh_df because it is a clustering variable
 
 
 
