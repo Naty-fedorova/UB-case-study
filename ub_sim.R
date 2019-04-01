@@ -177,6 +177,8 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   residence_length_plot <- rep(0, times = N_hh)
   residence_length_total <- rep(0, times = N_hh)
   in_env <- rep(0, times = N_hh)
+  
+  # make NAs rather than zeros
   house_invest <- rep(0, times = N_hh)
   total_mig <- rep(0, times = N_hh)
   
