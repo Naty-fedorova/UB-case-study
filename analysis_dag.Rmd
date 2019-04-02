@@ -14,14 +14,15 @@ This document exists to trace the planning stages of the UB case study. The proc
 
 Initialization
 ```{r}
-# install.packages("rethinking")
-# library(rethinking)
-install.packages("dagitty")
+# install.packages("dagitty")
 library(dagitty)
 
-install.packages(c("devtools","mvtnorm","loo","coda"),dependencies=TRUE)
-library(devtools)
-install_github("rmcelreath/rethinking",ref="Experimental")
+# install.packages(c("devtools","mvtnorm","loo","coda"),dependencies=TRUE)
+# library(devtools)
+# install_github("rmcelreath/rethinking",ref="Experimental")
+
+# install.packages("rethinking")
+library(rethinking)
 ```
 
 
@@ -259,9 +260,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   residence_length_plot <- rep(0, times = N_hh)
   residence_length_total <- rep(0, times = N_hh)
   in_env <- rep(0, times = N_hh)
-  
-  # make NAs rather than zeros
-  house_invest <- rep(0, times = N_hh)
+  house_invest <- rep(NA, times = N_hh)
   total_mig <- rep(0, times = N_hh)
   
   hh_df <- data.frame(hh_id, fam_id, capital, intend_stay, residence_length_plot, residence_length_total, total_mig, in_env, house_invest)
@@ -430,16 +429,126 @@ df <- s[["hh_df"]]
 # TODO 
 # agents can be squatters and visitors in one timestep
 # should land buying also be affected by intended stay?
-# sunk costs? will this emerge out of the model? how can I test it?
 # atm shocks to capital are the same for everyone, but realistically shouldn't be
 # track plot id in hh_df because it is a clustering variable
+# have a look at the house_invest stuff because it is giving rise to a very narrow distribution
 
 ```
 
 Planning the analysis
+
+Below is a walk through of relevant parts of rethinking v2 - as a learning exercise with my simulated data. 
+
+Outcome variable would be house investment (I) so lets model that first
+I ~ Normal(mu, sigma): likelihood
+mu ~ Normal(0, 1): mu prior - needs to be positive, but need to think about standardizing, also need to think about how I'm making this in the abm 
+sigma ~ Uniform (0, 10)
 ```{r}
-precis(df)
+# plot prior
+
+# mu
+# determines spread of mean
+curve(dnorm(x, 0, 1), from = -10, to = 10) #normal, not a lot of spread, need to understand interpretation
+
+# above is assuming some sort of standardization - what if we had it in euro?
+# ger could be about 800 euro
+# a bashin? maybe average of 5000 
+# in abm, investment in ger not tracked
+curve(dnorm(x, 5000, 1000), from = 3000, to = 7000)
+
+# sigma
+# flat prior constrained to be positive
+curve(dunif(x, 0, 1000), from = -10, to = 10)
+
+# sampling from priors
+n <- 10000
+
+sample_mu <- dnorm(n, 5000, 1000)
+sample_sigma <- dunif(n, 0, 1000)
+prior_I <- rnorm(n, sample_mu, sample_sigma) 
+
+# calling prior I, but in df it is house_invest, either rename or just use house_invest
+
+dens(prior_I) # now I don't understand the x axis
+
+# write out model
+# with priors that have been adjusted (working with abm form now)
+
+m1 <- quap(
+  alist(
+    house_invest ~ dnorm(mu, sigma) ,
+    mu ~ dnorm(0, 1) ,
+    sigma ~ dunif(0, 5)
+  ), data = df
+)
+
+precis(m1)
+
+# extract samples
+
+post <- extract.samples(m1, n = n)
+precis(post)
+```
+Adding a predictor: linear model
+
+Let's focus on how wealth affects house investment, focusing just on the direct relationship
+mu = a + B(xi - xbar)
+```{r}
+# first, because here we can only deal with those that have house_invest (i.e. those that built houses), we need to work with the subset
+df_s <- df[!is.na(df$house_invest), ]
 
 
+# figuring out the prior for B
+# must do some prior predictive simulation
 
+n <- 100
+
+# already have a
+
+a <-  rnorm(n, 0, 1)
+b <- rlnorm(n, 0, 1) 
+
+plot(NULL, xlim = range(df_s$capital), ylim = c(-10, 10))
+xbar <- mean(df_s$capital)
+for(i in 1:n){
+  curve(a[i] + b[i]*(x-xbar), add = TRUE)
+}
+
+# it doesn't really look great
+
+xbar <- mean(df_s$capital)
+
+m2 <- quap(
+  alist(
+    house_invest ~ dnorm(mu, sigma) ,
+    mu ~ a + b*(capital - xbar),
+    a ~ dnorm(0, 1) ,
+    b ~ dlnorm(0, 1) ,
+    sigma ~ dunif(0, 5)
+  ), data = df_s
+)
+
+precis(m2)
+
+# interpreting the posterior
+
+plot(house_invest ~ capital, data = df_s)
+post <- extract.samples(m2)
+a_map <- mean(post$a)
+b_map <- mean(post$b)
+curve(a_map + b_map*(x - xbar), add = TRUE)
+
+# drawing uncertainty
+
+capital_seq <- seq(from = -1, to = 3, by = 1)
+mu_u <- link(m2, data = data.frame(capital = capital_seq))
+
+mu_mean <- apply(mu_u, 2, mean)
+mu_hpdi <- apply(mu_u, 2, HPDI, prob = 0.89)
+
+plot(house_invest ~ capital, data = df_s)
+lines(capital_seq, mu_mean)
+shade(mu_hpdi, capital_seq)
+
+# this thing looks like it should have a ton more uncertainty. go figure. in any case - this is for mu
 ```
