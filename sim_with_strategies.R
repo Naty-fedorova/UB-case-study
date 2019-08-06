@@ -2,15 +2,47 @@
 # 2: suburban strategy: goal is to live in the ger districts, space maximization
 # 3: temporary strategy: goal is to extract capital from UB, capital maximization
 
-#strength of strategy (this should be a parameter in the simulation that says to what extend strategy is determining decision making, and to what extent are decisions stochastic)
+# strength of strategy (this should be a parameter in the simulation that says to what extend strategy is determining decision making, and to what extent are decisions stochastic)
 
-
-
+# questions
+# how to include household composition in here (without making this a crazy model) atm just used for strategy and recorded at environment entry
+# how does experience with urb. env affect people differentially (in the capital shocks for example?)
+# btw shouldn't strategy also depend on where you are in the decision making process? i.e. if you're a land owner, does this change your strategy?
+# need to add a "leave environment" section, need a time and capital sensitive threshold for temporary strategy, and a capital sensitive threshold for urban strategy
+# there should also be some stochastic leaving from all of them
 
 
 ####rewrite
 
 # Functions ####
+
+strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
+  # This functions assigns one of three strategies to each agent (household)
+  # they can either be assigned urban (1), suburban (2), or temporary (3)
+  # strategy is a product of internat preference , possesions outside UB, and household composition at move
+  # param possessions: ownership of objects outside environment, i.e. an alternative (1 = none, 2 = some)
+  # param HC_at_move: household composition at move, in what composition does hh enter environment (1:single, 2:couple 3:fam with young kids, 4:fam with old kids, 5: fam with res. adult kids, 6:retired couple/single)
+  # param intend_stay: intended stay of hh in environment, proxy for internal preference (1 = short(no), 2 = long (yes,sometime))
+  
+  # for urban strategy
+  if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 3) & possessions == 1 & intend_stay == 2) {
+   sample(1:3, 1, prob = c(.60, .20, .20) )
+  }
+  
+  # for suburban strategy
+  if ((HC_at_move == 4 | HC_at_move == 5) & possessions == 1 & intend_stay == 2) {
+    sample(1:3, 1, prob = c(.20, .60, .20) )
+  }
+  
+  # for temporary strategy
+  if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 5 | HC_at_move == 6 ) & possessions == 2 & intend_stay == 1) {
+    sample(1:3, 1, prob = c(.20, .60, .20) )
+  } else{
+    # if none of these combinations are fulfilled, just random sample
+    sample(1:3, 1)
+  }
+}
+
 get_preference_for_migrant <- function(strategy, capital) {
   # This function decides a migrant's preference between staying with family, or squatting an empty plot 
   # based on their strategy, and capital (could also include all the other factors)
@@ -19,6 +51,8 @@ get_preference_for_migrant <- function(strategy, capital) {
   # param strategy: whether the agents strategy is urban(1), suburban(2), or temporary(3)
   # param capital: wealth (broadly)
   # return: either "family" or "squat"
+  
+  # atm I don't have strong reasons for why these options have different likelihoods, discuss
   
   
   # for the urban strategy
@@ -32,6 +66,8 @@ get_preference_for_migrant <- function(strategy, capital) {
   }
   
   # for the urban strategy (poor)
+  
+  # maybe these guys are more likely to want to stay with family if they have low experience (but isn't that true for everyone)
   if (strategy == 1 && capital <= 0) {
     if (rbinom(1, 1, prob = 0.60) == 1) {
       return("family")
@@ -176,6 +212,14 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
   )
 }
 
+
+# leaving land
+
+leaving_land <- function(strategy, capital_gain, time_spent){
+  # for this one I probs. also need to set up a capital improvement tracking mechanism - to see improvement over time
+  
+}
+
 # Simulation
 
 sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams=20) {
@@ -193,16 +237,23 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   
   hh_id <- 1:N_hh
   fam_id <- sample( 1:N_fams , size=N_hh, replace = TRUE)
-  strategy <- sample(1:3, size = N_hh, replace = TRUE) # atm randomly assigned with equal probability, add prob vector to weigh proportions
+  strategy <- rep(0, times = N_hh)
   capital <- rnorm(N_hh)
-  intend_stay <- rnorm(N_hh)
+  intend_stay <- sample(1:2, size = N_hh, replace = TRUE)
+  HC_at_move <- sample(1:6, size = N_hh, replace = TRUE)
+  possessions <- sample(1:2, size = N_hh, replace = TRUE)
   residence_length_plot <- rep(0, times = N_hh)
   residence_length_total <- rep(0, times = N_hh)
   in_env <- rep(0, times = N_hh)
   house_invest <- rep(NA, times = N_hh)
   total_mig <- rep(0, times = N_hh)
   
-  hh_df <- data.frame(hh_id, fam_id, strategy, capital, intend_stay, residence_length_plot, residence_length_total, total_mig, in_env, house_invest)
+  hh_df <- data.frame(hh_id, fam_id, strategy, capital, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, house_invest)
+  
+  # strategy assignment
+  for (i in 1:nrow(hh_df)){
+    hh_df$strategy[i] <- strategy_assignment(possessions = hh_df$possessions[i], HC_at_move = hh_df$HC_at_move[i], intend_stay = hh_df$intend_stay[i])
+  }
   
   # init plots
   plot_pop <- rep( 0 , N_plots )
