@@ -214,10 +214,18 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
 
 
 # leaving land
+# thresholds in this function can respond to optimal model
 
-leaving_land <- function(strategy, capital_gain, time_spent){
-  # for this one I probs. also need to set up a capital improvement tracking mechanism - to see improvement over time
+leaving_land <- function(strategy, capital_acc, residence_length_total){
+  # if your strategy is urban and you get above 2 in capital_acc, leave environment (return "leave")
+  if(strategy == 1 & capital_acc > 2){
+    return("leave")
+  }
   
+  # if your strategy is temporary and you get above 5 (or?) in residence_length_total, leave environment (return "leave")
+  if(strategy == 3 & residence_length_total > 5){
+    return("leave")
+  }
 }
 
 # Simulation
@@ -239,6 +247,8 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   fam_id <- sample( 1:N_fams , size=N_hh, replace = TRUE)
   strategy <- rep(0, times = N_hh)
   capital <- rnorm(N_hh)
+  capital_tminusone <- rep(0, times = N_hh)   # capital at t-1
+  capital_acc <- rep(0, times = N_hh)       # capital accumulation over timesteps spent in env 
   intend_stay <- sample(1:2, size = N_hh, replace = TRUE)
   HC_at_move <- sample(1:6, size = N_hh, replace = TRUE)
   possessions <- sample(1:2, size = N_hh, replace = TRUE)
@@ -248,7 +258,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   house_invest <- rep(NA, times = N_hh)
   total_mig <- rep(0, times = N_hh)
   
-  hh_df <- data.frame(hh_id, fam_id, strategy, capital, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, house_invest)
+  hh_df <- data.frame(hh_id, fam_id, strategy, capital, capital_tminusone, capital_acc, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, house_invest)
   
   # strategy assignment
   for (i in 1:nrow(hh_df)){
@@ -405,14 +415,23 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     #####
     
     # stochastic shock to capital ####
-    
-    ######## this is what i need to track to address accumulation, if I want to update strategies dynamically
-    
-    
+
     # city life is a lottery
+    # for agents in env, capital gets shocked, this difference is then accumulated over timesteps
     for (i in 1:length(hh_present)){
+      hh_df$capital_tminusone[hh_present][i] <- hh_df$capital[hh_present][i]
       hh_df$capital[hh_present][i] <- hh_df$capital[hh_present][i] + rnorm(1, 0, 0.25) 
+      hh_df$capital_acc[hh_present][i] <- hh_df$capital_acc[hh_present][i] + (hh_df$capital[hh_present][i] - hh_df$capital_tminusone[hh_present][i]) 
+      
     }
+    
+    # leaving land
+    # individuals that have reached leaving threshold must be removed from env
+    for (i in 1:nrow(hh_df)){
+      threshold_status <- leaving_land()
+    }
+    
+    
     #####
   }#t
   
