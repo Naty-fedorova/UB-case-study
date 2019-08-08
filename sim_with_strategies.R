@@ -1,19 +1,3 @@
-# 1: urban strategy: goal is to live in the central city, centrality maximization
-# 2: suburban strategy: goal is to live in the ger districts, space maximization
-# 3: temporary strategy: goal is to extract capital from UB, capital maximization
-
-# strength of strategy (this should be a parameter in the simulation that says to what extend strategy is determining decision making, and to what extent are decisions stochastic)
-
-# questions
-# how to include household composition in here (without making this a crazy model) atm just used for strategy and recorded at environment entry
-# how does experience with urb. env affect people differentially (in the capital shocks for example?)
-# btw shouldn't strategy also depend on where you are in the decision making process? i.e. if you're a land owner, does this change your strategy?
-# need to add a "leave environment" section, need a time and capital sensitive threshold for temporary strategy, and a capital sensitive threshold for urban strategy
-# there should also be some stochastic leaving from all of them
-
-
-####rewrite
-
 # Functions ####
 
 strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
@@ -23,6 +7,9 @@ strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
   # param possessions: ownership of objects outside environment, i.e. an alternative (1 = none, 2 = some)
   # param HC_at_move: household composition at move, in what composition does hh enter environment (1:single, 2:couple 3:fam with young kids, 4:fam with old kids, 5: fam with res. adult kids, 6:retired couple/single)
   # param intend_stay: intended stay of hh in environment, proxy for internal preference (1 = short(no), 2 = long (yes,sometime))
+  # return: 1,2, or 3 representing urban, suburban, and temporary strategy respectively
+  
+  # this function will change in response to the optimality model
   
   # for urban strategy
   if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 3) & possessions == 1 & intend_stay == 2) {
@@ -55,8 +42,8 @@ get_preference_for_migrant <- function(strategy, capital) {
   # atm I don't have strong reasons for why these options have different likelihoods, discuss
   
   
-  # for the urban strategy
-  if (strategy == 1 && capital > 0) {
+  # for the suburban strategy
+  if (strategy == 2 && capital > 0) {
     if (rbinom(1, 1, prob = 0.99) == 1) {
       return("squat")
     }
@@ -65,10 +52,8 @@ get_preference_for_migrant <- function(strategy, capital) {
     }
   }
   
-  # for the urban strategy (poor)
-  
-  # maybe these guys are more likely to want to stay with family if they have low experience (but isn't that true for everyone)
-  if (strategy == 1 && capital <= 0) {
+  # for the suburban strategy (poor)
+  if (strategy == 2 && capital <= 0) {
     if (rbinom(1, 1, prob = 0.60) == 1) {
       return("family")
     }
@@ -77,8 +62,8 @@ get_preference_for_migrant <- function(strategy, capital) {
     }
   }
   
-  # for suburban strategy
-  if (strategy == 2) {
+  # for urban strategy
+  if (strategy == 1) {
     if (rbinom(1, 1, prob = 0.80) == 1) {
       return("family")
     }
@@ -217,18 +202,30 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
 # thresholds in this function can respond to optimal model
 
 leaving_land <- function(strategy, capital_acc, residence_length_total){
+  # function that determines whether you should leave the environment or not
+  # based on strategy, capital_acc, and residence_length_total
+  # param strategy: strategy of agent, atm leaving only assigned for urban and temporary agents
+  # param capital_acc: parameter that tracks how much capital has been accumulated (difference from first assignment) over t
+  # param residence_length_total: total t spent in environment
+  # return: either "leave" or "stay" 
+  
+  
   # if your strategy is urban and you get above 2 in capital_acc, leave environment (return "leave")
   if(strategy == 1 & capital_acc > 2){
     return("leave")
+  } else{
+    return("stay")
   }
   
   # if your strategy is temporary and you get above 5 (or?) in residence_length_total, leave environment (return "leave")
   if(strategy == 3 & residence_length_total > 5){
     return("leave")
+  } else{
+    return("stay")
   }
 }
 
-# Simulation
+# Simulation #########
 
 sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams=20) {
   # Master function for ABM
@@ -237,7 +234,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   # param N_migrants: number of agents entering environment at each timestep
   # param plot_capacity: number of agents that can stay at each plot
   # param N_fams: number of families in environment
-  # return: details of the environment after simulation runs
+  # return: details of the environment after simulation runs: plot_own, plot_house, plot_ids,hh_df (dataframe tracking agents)
   
   # init ####
   # init agents (number of households)
@@ -257,8 +254,9 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   in_env <- rep(0, times = N_hh)
   house_invest <- rep(NA, times = N_hh)
   total_mig <- rep(0, times = N_hh)
+  env_left <- rep(0, times = N_hh) # t at which env was left 
   
-  hh_df <- data.frame(hh_id, fam_id, strategy, capital, capital_tminusone, capital_acc, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, house_invest)
+  hh_df <- data.frame(hh_id, fam_id, strategy, capital, capital_tminusone, capital_acc, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, house_invest, env_left)
   
   # strategy assignment
   for (i in 1:nrow(hh_df)){
@@ -279,7 +277,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     
     # internal migration ####
     # find squatters (and fam on their plot), relocate (idea is that squatters must either buy land or move to new plot at every timestep)
-    # find plots of squatters
+    # find plots of squatters (agents that settled on empty land but don't own it)
     squatter_plot_index <- which(plot_ids[,1] > 0 & plot_own == 0)
     
     if(length(squatter_plot_index) > 0){
@@ -289,16 +287,10 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       #remove 0s from squatter_ids
       squatter_id <- squatter_id[squatter_id != 0]
       
-      # remove squatters from plots and update plot ids
+      # remove squatters from plots and update plot ids, remove their family, update plot_pop, and residence length plot
       plot_ids[squatter_plot_index] <- 0
-      
-      # and family
       plot_ids[,2][squatter_plot_index] <- 0
-      
-      # update plot_pop
       plot_pop[squatter_plot_index] <- 0
-      
-      # update residence length plot
       hh_df$residence_length_plot[squatter_id] <- 0
       
       # internal migration for newly displaced squatters 
@@ -306,7 +298,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       for (i in 1:length(squatter_id)){
         hh_index = squatter_id[i] # one agent
         
-        l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)
+        l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)       #this was coded a while ago and now seems clunky - look into
         hh_df <- l[["hh_df"]]
         plot_ids <- l[["plot_ids"]]
         plot_pop <- l[["plot_pop"]]
@@ -332,8 +324,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
               plot_ids[,2][visitor_plots[i]] <- 0
               plot_pop[visitor_plots[i]] <- plot_pop[visitor_plots[i]] - 1
               hh_df$residence_length_plot[visitor_ids[i]] <- 0
-              
-              
+ 
               #put them in new plot & update total mig
               plot_pop[destination] <- plot_pop[destination] + 1
               plot_ids[destination] <- hh_df$hh_id[visitor_ids[i]]
@@ -365,17 +356,18 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     # buying land reflects strategy: 
     # if you live on open land, have enough capital, and have suburban strategy, buy land
     # however, if you have urban or temporary strategy and a lot of capital, you also buy land (as an investment)
+    # atm buying land relates to capital you have in that timestep, not to accumulated capital - think about this
     
     for (i in 1:nrow(plot_ids)){
       # get own occupied patches
       if(plot_ids[i,1] > 0){
         # if strategy is suburban (2), their capital is more than 0, and they are living on their own plot, they can buy the land (stochastic)
-        if(hh_df$capital[plot_ids[i,1]] > 0 & plot_own[i] == 0 & hh_df$strategy[plot_ids[i,1]] == 1){  
+        if(hh_df$capital[plot_ids[i,1]] > 0 & plot_own[i] == 0 & hh_df$strategy[plot_ids[i,1]] == 2){  
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
         }
         
         #if strategy is urban (1) or temporary (3), their capital more than 2, and they are living on their own plot, they can buy the land (stochastic)
-        if(hh_df$capital[plot_ids[i,1]] > 2 & plot_own[i] == 0 & (hh_df$strategy[plot_ids[i,1]] == 2 | hh_df$strategy[plot_ids[i,1]] == 3)){ 
+        if(hh_df$capital[plot_ids[i,1]] > 2 & plot_own[i] == 0 & (hh_df$strategy[plot_ids[i,1]] == 1 | hh_df$strategy[plot_ids[i,1]] == 3)){ 
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
         }
       }
@@ -386,11 +378,11 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     # if live on family land stay in ger, so ignore
     # if live on own land, can build
     # investment proportional to capital
-    # min capital needed for building house: 0    ###############where do i check this?
+    # min capital needed for building house: 0
+    # atm building a house not dependent on strategy, only dependent on owning land
     for (i in 1:length(plot_own)){
       if(plot_own[i] == 1){
-        
-        if(plot_house[i] == 0){
+        if(plot_house[i] == 0 & hh_df$capital[plot_ids[i,1]] >= 0){
           plot_house[i] <- rbinom(1, 1, 0.7)
           
           if(plot_house[i] == 1){
@@ -427,8 +419,17 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     
     # leaving land
     # individuals that have reached leaving threshold must be removed from env
-    for (i in 1:nrow(hh_df)){
-      threshold_status <- leaving_land()
+    for (i in 1:length(hh_present)){
+      threshold_status <- leaving_land(strategy = hh_df$strategy[i], capital_acc = hh_df$capital_acc[i], residence_length_total = hh_df$residence_length_total[i])
+      
+      if(threshold_status == "leave"){ 
+        # need to update hh_df: in_env and left_env, plot_pop, plot_id 
+        hh_df$in_env[hh_present][i] <- 0
+        hh_df$env_left[hh_present][i] <- t
+        
+        plot_ids[which(plot_ids == hh_df$hh_id[hh_present][i], arr.ind = TRUE)] <- 0
+        plot_pop[which(plot_ids == hh_df$hh_id[hh_present][i], arr.ind = TRUE)[1]] <- 0
+      }
     }
     
     
@@ -449,6 +450,23 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
 s <- sim_ub(tmax=10,N_plots=100)
 
 df <- s[["hh_df"]]
+
+
+
+
+# Notes
+
+# 1: urban strategy: goal is to live in the central city, centrality maximization
+# 2: suburban strategy: goal is to live in the ger districts, space maximization
+# 3: temporary strategy: goal is to extract capital from UB, capital maximization
+
+# strength of strategy (this should be a parameter in the simulation that says to what extend strategy is determining decision making, and to what extent are decisions stochastic)
+
+# questions
+# how to include household composition in here (without making this a crazy model) atm just used for strategy and recorded at environment entry
+# how does experience with urb. env affect people differentially (in the capital shocks for example?)
+# btw shouldn't strategy also depend on where you are in the decision making process? i.e. if you're a land owner, does this change your strategy? most importantly household composition
+# there should also be some stochastic leaving for all agents
 
 
 
