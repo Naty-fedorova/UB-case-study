@@ -186,7 +186,7 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
     # update total mig
     hh_df$total_mig[hh_index] <- hh_df$total_mig[hh_index] + 1
     
-    print(c("The possible plots are full for id: ", hh_df$hh_id[hh_index]))
+    #print(c("The possible plots are full for id: ", hh_df$hh_id[hh_index]))
   }
   return(
     list(
