@@ -276,11 +276,14 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     
     # internal migration ####
     
-    # TODO not sure I like this, seems a bit harsh
-    
-    # find squatters (and fam on their plot), relocate (idea is that squatters must either buy land or move to new plot at every timestep)
+    # stochastic, a few squatters have to relocate 
+    # TODO want to parametrize how many? or maybe make this based on acc capital? If your situation got worse, you move?
+    # find squatters (and fam on their plot), relocate 
     # find plots of squatters (agents that settled on empty land but don't own it)
     squatter_plot_index <- which(plot_ids[,1] > 0 & plot_own == 0)
+    
+    # get 20%  of them
+    squatter_plot_index <- sample(squatter_plot_index, (0.2*length(squatter_plot_index)), replace = FALSE)
     
     if(length(squatter_plot_index) > 0){
       # get squatter and fam ID so they can move later
@@ -308,31 +311,35 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     }
     ##### 
     
-    # people staying with family reevaluate their choices ####
+    # Suburbans try to find empty land ####
     
-    # TODO this reevaluation really should depend on strategy rather than just capital tho
-    
-    # if environment has been good, they try to look for land ####atm this is nothing cool, just if their capital is above 0 (not tracking improvement) 
+    # agents with suburban strategy living with family try to find own land, based on if they have capital to move 
     # if capital is above 0, try to find empty plot
+    # agents with urban or suburban strategy want to live with family so don't move them
     
-    # get people living with family
+    # get people living with family and with strategy = 2
     visitor_plots <- which(plot_ids[,2] != 0)
     visitor_ids <- plot_ids[,2][visitor_plots]
+    visitors_2 <- visitor_ids[which(hh_df$strategy[visitor_ids] == 2)]
     
-    if(length(visitor_ids) > 0 ){
-      for(i in 1:length(visitor_ids)){
-        if(hh_df$capital[visitor_ids[i]] > 0){
+    if(length(visitors_2) > 0 ){
+      for(i in 1:length(visitors_2)){
+        # get plot
+        plot <- which(plot_ids[,2] == visitors_2[i])
+        
+        if(hh_df$capital[visitors_2[i]] > 0){
           destination <- get_destination_squat(plot_pop)
           if ( destination > 0 ) {
+            
             # if they have found a new plot, remove them from all prior 
-            plot_ids[,2][visitor_plots[i]] <- 0
-            plot_pop[visitor_plots[i]] <- plot_pop[visitor_plots[i]] - 1
-            hh_df$residence_length_plot[visitor_ids[i]] <- 0
-
+            plot_ids[,2][plot] <- 0
+            plot_pop[visitor_plots[i]] <- plot_pop[visitors_2[i]] - 1
+            hh_df$residence_length_plot[visitors_2[i]] <- 0
+            
             #put them in new plot & update total mig
             plot_pop[destination] <- plot_pop[destination] + 1
-            plot_ids[destination] <- hh_df$hh_id[visitor_ids[i]]
-            hh_df$total_mig[visitor_ids[i]] <-  hh_df$total_mig[visitor_ids[i]] + 1
+            plot_ids[destination] <- hh_df$hh_id[visitors_2[i]]
+            hh_df$total_mig[visitors_2[i]] <-  hh_df$total_mig[visitors_2[i]] + 1
           }
         }
       }
@@ -340,14 +347,14 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     #####
     
     # inmigration of new migrants ####
+    
     # finding land
     for (i in 1:N_migrants){
       #calculate index so household data.frame can be indexed
       hh_index <- (t-1)*N_migrants + i #one agent
       
       l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)
-      
-      # TODO how does R work? Do I need this updating here?
+    
       hh_df <- l[["hh_df"]]
       plot_ids <- l[["plot_ids"]]
       plot_pop <- l[["plot_pop"]]
@@ -470,13 +477,12 @@ df <- s[["hh_df"]]
 # 2: suburban strategy: goal is to live in the ger districts, space maximization
 # 3: temporary strategy: goal is to extract capital from UB, capital maximization
 
-# strength of strategy (this should be a parameter in the simulation that says to what extend strategy is determining decision making, and to what extent are decisions stochastic)
-
 # questions
 # how to include household composition in here (without making this a crazy model) atm just used for strategy and recorded at environment entry
 # how does experience with urb. env affect people differentially (in the capital shocks for example?)
 # btw shouldn't strategy also depend on where you are in the decision making process? i.e. if you're a land owner, does this change your strategy? most importantly household composition
 # there should also be some stochastic leaving for all agents
+
 
 
 
