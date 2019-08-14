@@ -23,7 +23,7 @@ strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
   
   # for temporary strategy
   if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 5 | HC_at_move == 6 ) & possessions == 1 & intend_stay == 0) {
-    sample(1:3, 1, prob = c(.20, .60, .20) )
+    sample(1:3, 1, prob = c(.20, .20, .60) )
   } else{
     # if none of these combinations are fulfilled, just random sample
     sample(1:3, 1)
