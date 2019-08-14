@@ -1,0 +1,104 @@
+---
+title: "From questions to composites"
+author: "Natalia Fedorova"
+date: "8/14/2019"
+output: html_document
+---
+This document details how individual questions in the "Constructing Permanence" Survey become composite measures used in the analysis
+
+Here we simulate possible question answers, and use this simulated data to create composites that will them be analysized and matched with the ABM
+
+The survey questions
+
+See files x and y for questions in hasha and household surveys respectively
+
+
+Variables of interest
+
+data sim set up
+```{r}
+N_hh <- 100
+
+
+
+```
+
+Capital
+
+The capital variable will be made from questions in Section C
+
+think about whether education should just be included in capital (because it will correlate) or if we want that as its own variable?
+
+# c4: change to income since coming to UB, if relevant
+# what to extract: increase, decrease, no change
+# this question is actually not for capital, but for capital accumulation (informas parameters of ABM)
+
+#c6 part 2 (for strategy assessment)
+assets_outside_UB <- sample(0:100, N_hh, replace = TRUE)
+assets_outside_UB <- assets_outside_UB/total_assets
+
+```{r}
+# c1: who contributes (name, occupation, length of employment)
+# what to extract: number of earners
+
+n_earners <- sample(0:6, N_hh, replace = TRUE)
+
+# c2: sources of income
+# what to extract
+
+# c3: proportion of income saved
+# what to extract: answer as is, 0 = nothing, 1 = <10, 2 = <25, 3 = 25-50, 4 = >50, NaN is don't know (didn't answer should be something else)
+
+saving_prop <- sample(c(0, 1, 2, 3, 4, NaN), N_hh, replace = TRUE)
+
+# c5: loans
+# what to extract: total number of different loans
+
+loans <- sample(0:6, N_hh, replace = TRUE)
+
+# c6: assets
+# what to extract: this is a very informative question,  1: total number of things owned, 2: proportions of things owned in and out of UB (used in strategy assessment)
+#part 1 (might also want to rank these assets)
+total_assets <- sample(0:300, N_hh, replace = TRUE)
+
+# f6: value of hasha (if owned)
+# what to extract: actual value of hasha (range)
+
+hasha_value <- sample(c(1:6, NaN), N_hh, replace = TRUE)
+
+# ga or gb
+# what to extract: does household own hasha (yes/no)
+
+hasha_own <- sample(0:1, N_hh, replace = TRUE)
+
+# ha or hb
+# what to extrat: does household own dwelling (yes/no)
+
+dwelling_own <- sample(0:1, N_hh, replace = TRUE)
+
+
+# constructing "capital"
+
+
+
+```
+
+Social Capital
+
+Household Composition
+
+Urban experience
+
+Intended stay
+
+Outcome variables
+
+Investment
+
+House type
+
+Residence length?
+
+
+
+
