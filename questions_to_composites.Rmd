@@ -19,13 +19,14 @@ data sim set up
 ```{r}
 N_hh <- 100
 
-
-
+# NaN means don't know
+# NA means there is no answer, question was left blank 
+# doesn't apply generally not coded
+# yes/no questions turned to 1/0 respectively 
+# categorical answers given values from 1:max
 ```
 
 Capital
-
-The capital variable will be made from questions in Section C
 
 think about whether education should just be included in capital (because it will correlate) or if we want that as its own variable?
 
@@ -61,20 +62,34 @@ loans <- sample(0:6, N_hh, replace = TRUE)
 #part 1 (might also want to rank these assets)
 total_assets <- sample(0:300, N_hh, replace = TRUE)
 
-# f6: value of hasha (if owned)
+# fa5: economic situation at hasha move in
+# what to extract: category of worse, same, better
+
+capital_at_hasha_move_in <- sample(1:3, N_hh, replace = TRUE)
+
+# fa6: value of hasha (if owned)
 # what to extract: actual value of hasha (range)
 
 hasha_value <- sample(c(1:6, NaN), N_hh, replace = TRUE)
 
+# fb4: economic situation at move in to dwelling
+#what to extract: category of worse, same, better, doesn't apply
+
+capital_at_dwelling_move_in <- sample(c(1:3, NaN), N_hh, replace = TRUE)
+
 # ga or gb
 # what to extract: does household own hasha (yes/no)
+# this is also for ownership 
 
 hasha_own <- sample(0:1, N_hh, replace = TRUE)
 
 # ha or hb
 # what to extrat: does household own dwelling (yes/no)
+# this is also for ownership
 
 dwelling_own <- sample(0:1, N_hh, replace = TRUE)
+
+
 
 
 # constructing "capital"
@@ -85,20 +100,284 @@ dwelling_own <- sample(0:1, N_hh, replace = TRUE)
 
 Social Capital
 
+Measured in this survey as presence of family in UB (of anyone in the household). Family is extremely important in Ulaanbaatar, both for incomers and for long term residents.
+
+```{r}
+# b1: n of related households
+# what to extract: category of how many related families in UB
+
+n_fam <- sample(c(1:4, NaN), N_hh, replace = TRUE)
+
+# b2: relatives that live walking distance
+# what to extract: yes, no, don't know, doesn't apply
+
+fam_walk <- sample(c(1:2, NaN), N_hh, replace = TRUE)
+
+# b3: closeness to said family
+# what to extract: category - not close, medium, close
+
+fam_close <- sample(1:3, N_hh, replace = TRUE)
+
+# ga2: who did you aquire hasha from
+# what to extract: yes/no acquired from family (could also use the friend component of this question)
+
+hasha_from_fam <- rbinom(N_hh, 1, prob = 0.5)
+
+# gb1: who owns the hasha
+# what to extract: yes/no family owns the hasha
+
+hasha_fam_own <- rbinom(N_hh, 1, prob = 0.5)
+
+# gb4: who did you find out about this hasha from
+# what to extract: yes/no from family
+
+hasha_fam_recom <- rbinom(N_hh, 1, prob = 0.5)
+
+# ha2: who did you acquir the dwelling from
+# what to extract: yes/no from family
+
+dwelling_from_fam <- rbinom(N_hh, 1, prob = 0.5)
+
+# ha3 question about how you acquired it? also in the g section for acquiring hasha
+
+# hb1: who owns the dwelling
+# what to extract: yes/no from family 
+
+dwelling_fam_own <- rbinom(N_hh, 1, prob = 0.5)
+
+# hb5: how did you find out about the dwelling?
+# what to extract: yes/no from family
+
+dwelling_fam_recom <- rbinom(N_hh, 1, prob = 0.5)
+
+# ia4: who helped you build the dwelling
+# what to extract: yes/no family did
+
+dwelling_fam_help <- rbinom(N_hh, 1, prob = 0.5)
+
+# ia6: who have  you helped build a dwelling
+# what to extract: yes/no family
+
+built_fam_dwelling <- rbinom(N_hh, 1, prob = 0.5)
+
+# ib1: who built the dwelling you are living in
+# what to extract: yes/no family built it
+
+dwelling_fam_built <- rbinom(N_hh, 1, prob = 0.5)
+
+```
+
 Household Composition
 
-Urban experience
+```{r}
+# a2: total number of adults
+# what to extract: as is, total number of adults
+
+hh_adults <- sample(1:10, N_hh, replace = TRUE)
+
+# a3: total number of children
+# what to extract: as is, total number of children
+
+hh_children <- sample(1:10, N_hh, replace = TRUE)   #these should actually be drawn as whole numbers from a distribution
+
+
+# aside from this very basica profile, need to construct the different categories of household (single, couple, breeding pair, bp with young children, bp with old children, bp and adult children, bp and other dependents, retirees), bearing in mind that families might not tightly fit in either of these categories. In any case, to construct these we use answer from Section A: the household census
+
+
+
+
+```
+
+
+
+Urban experience?
+
+
 
 Intended stay
+
+```{r}
+# e1a or a1b: do you intend to stay in UB
+# what to extract: yes/no 
+
+intend_stay <- rbinom(N_hh, 1, prob = 0.5)
+
+# E2 for intend to stay, for how long?
+# what to extract: category of length of stay
+
+intend_stay_length <- sample(1:5, N_hh, replace = TRUE)
+
+# E2 for don't intend to stay, when do you plan to leave?
+# what to extract: category of when you plan to leave
+
+intend_leave_length <- sample(1:5, N_hh, replace = TRUE)
+
+# e3 for stay, why?
+# what to extract: cateogry of why they intend to stay
+
+intend_stay_reason <- sample(1:6, N_hh, replace = TRUE)
+
+# e3 for leave, why?
+# what to extract: cateogry of why they intend to leave
+
+intend_leave_reason <- sample(1:6, N_hh, replace = TRUE)
+
+
+# composite measure for intend_stay
+
+
+```
 
 Outcome variables
 
 Investment
 
+```{r}
+# fa3: does hasha require investment in money/time?
+# what to extract: yes/no/don't know
+
+hasha_maintenance <- sample(c(1:2, NaN), N_hh, replace = TRUE)
+
+# fa4: any big repairs on hasha?
+# what to extract: yes/no/don't know
+
+hasha_repairs <- sample(c(1:2, NaN), N_hh, replace = TRUE)
+
+# fb2: time/maintenance on dwelling?
+# what to extract: yes/no/ don't know 
+
+dwelling_maintenance <- sample(c(1:2, NaN), N_hh, replace = TRUE)
+
+# fb3: any big repairs on dwelling?
+# what to extract: yes/no/don't know
+
+hasha_repairs <- sample(c(1:2, NaN), N_hh, replace = TRUE)
+
+# ga3: how did you acquire the hasha? 
+# what to extract: how to include it
+
+# ga4: when you purchased the hasha, how much was it?
+# what to extract: category of cost
+
+hasha_purchase_cost <- sample(c(1:6, NaN),  N_hh, replace = TRUE)
+
+# for hh that don't own the hasha
+
+# gb2: do you pay or provide a service to stay on this hasha?
+# what to extract: yes/no
+
+service_for_hasha <- rbinom(N_hh, 1, prob = 0.5)
+
+# gb3: did you pay a one time fee to stay on the hasha
+# what to extract: yes/no
+
+hasha_fee <- rbinom(N_hh, 1, prob = 0.5)
+
+# gb5: what have you built on this hasha
+# what to extract: category of thing built
+
+hasha_invst_built <- sample(0:3, N_hh, replace = TRUE)
+
+# dwelling investment
+
+# again ha3 should probably be included - how did you acquire it
+
+# for those who do not own the dwelling
+
+# hb2: how much do you pay to stay in this dwelling per month
+# what to extract: number amount in MNT
+
+dwelling_rent <- rnorm(N_hh, mean = 600000, sd = 300000)
+
+# hb3: did you pay a one time fee to stay at this dwelling
+# what to extract: yes/no
+
+dwelling_fee <- rbinom(N_hh, 1, prob = 0.5)
+
+# hb4: have you provided some service to the owner
+# what to extract: yes/no
+
+service_for_dwelling <- rbinom(N_hh, 1, prob = 0.5)
+
+# for households that built their own dwelling
+
+# ia2: how long did it take to construct it
+# what to extract: categories of length
+
+dwelling_construct_time <- sample(1:4, N_hh, replace = TRUE)
+
+# ia3: total cost to construct it
+# what to extract: category of cost
+
+dwelling_construct_cost <- sample(1:6, N_hh, replace = TRUE)
+
+# ia5: how many people built it
+# what to extract: as is, number
+
+dwelling_construct_manpower <- sample(1:20, N_hh, replace = TRUE)
+
+# for hh that didnt build their own dwelling
+
+# ib2: have you sig. altered the dwelling
+# what to extract: yes/no
+
+dwelling_alter <- rbinom(N_hh, 1, prob = 0.5)
+
+
+# Now, investment parameters based on ownership situation 
+
+
+```
+
 House type
 
-Residence length?
+```{r}
+# answer should be in d5 max, column C - this should record the latest address
+# but it would be best to check this with Hasha survey, matching structure in section D with residents, and with total residents in hh survey A2, to double check
 
+# d5 max, column C: type of dwelling
+# what to extract: category type of dwelling ger, bashin, apt
+
+dwelling_type <- sample(1:3, N_hh, replace = TRUE)
+
+# also interested in the macro property of the ger districts, so want to count up to get proportions of gers and bashins (and apt, which should never appear)
+
+n_ger <- length(dwelling_type[which(dwelling_type == 1)])
+n_bashin <- length(dwelling_type[which(dwelling_type == 2)])
+n_apt <- length(dwelling_type[which(dwelling_type == 3)])
+
+```
+
+Residence length total
+
+```{r}
+# d51, column b: residence start year
+# what to extract: as is, start year
+
+ub_start_year <- sample(1990:2019, N_hh, replace = TRUE)
+
+```
+
+Residence length plot
+
+```{r}
+# fa1: year hh started living on current hasha
+# what to extract: as is, star tyear
+
+hasha_start_year <- ub_start_year <- sample(1990:2019, N_hh, replace = TRUE)
+
+# this should be possible to check against d5max, column b, as that should be the current plot
+
+```
+
+
+
+Pilot data
+
+Parameters/Priors to input
+
+number of initial movements in UB before current hasha (for squatter dynamic)
+capital accumulation (does economic situation usually improve, or not, or halfhalf), for abm simulation
 
 
 
