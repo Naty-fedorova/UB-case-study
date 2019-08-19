@@ -197,12 +197,9 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
   )
 }
 
-
-# leaving land
-# thresholds in this function can respond to optimal model
-
 leaving_land <- function(strategy, capital_acc, residence_length_total){
   # function that determines whether you should leave the environment or not
+  # thresholds in this function can respond to optimal model
   # based on strategy, capital_acc, and residence_length_total
   # param strategy: strategy of agent, atm leaving only assigned for urban and temporary agents
   # param capital_acc: parameter that tracks how much capital has been accumulated (difference from first assignment) over t
@@ -226,36 +223,40 @@ leaving_land <- function(strategy, capital_acc, residence_length_total){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams=20) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13=2, cap_thres_build=0) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
   # param N_migrants: number of agents entering environment at each timestep
   # param plot_capacity: number of agents that can stay at each plot
   # param N_fams: number of families in environment
+  # param perc_sq: percent of squatters that have to move after each timestep
+  # param cap_thres_st2: capital threshold needed for strategy 2 agents to buy land 
+  # param cap_thres_st13: capital threshold needed for strategy 1 and 3 agents to buy land
+  # param cap_thres_build: capital threshold needed for house building
   # return: details of the environment after simulation runs: plot_own, plot_house, plot_ids,hh_df (dataframe tracking agents)
   
   # init ####
-  # init agents (number of households)
-  N_hh <- tmax*N_migrants
-  
+
+  N_hh <- tmax*N_migrants    # init agents (number of households)
   hh_id <- 1:N_hh
   fam_id <- sample( 1:N_fams , size=N_hh, replace = TRUE)
   strategy <- rep(0, times = N_hh)
-  capital <- rnorm(N_hh)
+  capital <- rnorm(N_hh, mean = 0, sd = 2)                # issue here, in real data capital might not be a normally distributed continuous variable
   capital_tminusone <- rep(0, times = N_hh)   # capital at t-1
-  capital_acc <- rep(0, times = N_hh)       # capital accumulation over timesteps spent in env 
+  capital_acc <- rnorm(N_hh, mean = 0, sd = 1)      # capital accumulation over timesteps spent in env, 
   intend_stay <- sample(0:1, size = N_hh, replace = TRUE)
   HC_at_move <- sample(1:6, size = N_hh, replace = TRUE)
   possessions <- sample(0:1, size = N_hh, replace = TRUE)
   residence_length_plot <- rep(0, times = N_hh)
   residence_length_total <- rep(0, times = N_hh)
   in_env <- rep(0, times = N_hh)
+  fam_in_env <- rep(0, times = N_hh)    # is family present in env? 
   house_invest <- rep(NA, times = N_hh)
   total_mig <- rep(0, times = N_hh)
   env_left <- rep(0, times = N_hh) # t at which env was left 
   
-  hh_df <- data.frame(hh_id, fam_id, strategy, capital, capital_tminusone, capital_acc, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, house_invest, env_left)
+  hh_df <- data.frame(hh_id, fam_id, strategy, capital, capital_tminusone, capital_acc, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, fam_in_env, house_invest, env_left)
   
   # strategy assignment
   for (i in 1:nrow(hh_df)){
@@ -272,7 +273,23 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   
   # Timestep loop ####
   for (t in 1:tmax){
-    print(c("Iteration ", t))
+    # print(c("Iteration ", t))
+    
+    #index of agents that are in the environment
+    hh_present <- which(hh_df$in_env == 1)
+    
+    # for each hh, are there any relatives in_env?
+    if(length(hh_present) > 0){
+      for (i in 1:length(hh_present)){
+        hh_fam_id <- hh_df$fam_id[hh_present][i]
+        hh_present_other <- hh_present[-i]    # remove agent from set of hh_present 
+        all_fam_ids <- hh_df$fam_id[hh_present_other] 
+        
+        if(hh_fam_id %in% all_fam_ids) {
+          hh_df$fam_in_env[hh_present][i] <- 1
+        }
+      }
+    }
     
     # internal migration ####
     
@@ -283,7 +300,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     squatter_plot_index <- which(plot_ids[,1] > 0 & plot_own == 0)
     
     # get 20%  of them
-    squatter_plot_index <- sample(squatter_plot_index, (0.2*length(squatter_plot_index)), replace = FALSE)
+    squatter_plot_index <- sample(squatter_plot_index, (perc_sq*length(squatter_plot_index)), replace = FALSE)
     
     if(length(squatter_plot_index) > 0){
       # get squatter and fam ID so they can move later
@@ -364,20 +381,19 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     # buying land ####
     
     # buying land reflects strategy: 
-    # if you live on open land, have enough capital, and have suburban strategy, buy land
-    # however, if you have urban or temporary strategy and a lot of capital, you also buy land (as an investment)
-    # TODO atm buying land relates to capital you have in that timestep, not to accumulated capital - think about this
+    # if you live on open land, have enough capital accumulated, and have suburban strategy, buy land
+    # however, if you have urban or temporary strategy and a lot of capital accumulated, you also buy land (as an investment)
     
     for (i in 1:nrow(plot_ids)){
       # get own occupied patches
       if(plot_ids[i,1] > 0){
         # if strategy is suburban (2), their capital is more than 0, and they are living on their own plot, they can buy the land (stochastic)
-        if(hh_df$capital[plot_ids[i,1]] > 0 & plot_own[i] == 0 & hh_df$strategy[plot_ids[i,1]] == 2){  
+        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2 & plot_own[i] == 0 & hh_df$strategy[plot_ids[i,1]] == 2){  
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
         }
         
         #if strategy is urban (1) or temporary (3), their capital more than 2, and they are living on their own plot, they can buy the land (stochastic)
-        if(hh_df$capital[plot_ids[i,1]] > 2 & plot_own[i] == 0 & (hh_df$strategy[plot_ids[i,1]] == 1 | hh_df$strategy[plot_ids[i,1]] == 3)){ 
+        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st13 & plot_own[i] == 0 & (hh_df$strategy[plot_ids[i,1]] == 1 | hh_df$strategy[plot_ids[i,1]] == 3)){ 
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
         }
       }
@@ -386,14 +402,12 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     
     # building home ####
     # if live on family land stay in ger, so ignore
-    # if live on own land, can build
+    # if live on own land, can build, provided you have enough capital OR you have family in the env able to help(check against pilot data)
     # investment proportional to capital
-    # min capital needed for building house: 0
-    # atm building a house not dependent on strategy, only dependent on owning land
     for (i in 1:length(plot_own)){
       if(plot_ids[i,1] > 0){ # if the agent is still present
         if(plot_own[i] == 1){
-          if(plot_house[i] == 0 & hh_df$capital[plot_ids[i,1]] >= 0){
+          if((plot_house[i] == 0 & hh_df$capital[plot_ids[i,1]] >= cap_thres_build) | (plot_house[i] == 0 & hh_df$fam_in_env[plot_ids[i,1]] ==1)){
             plot_house[i] <- rbinom(1, 1, 0.7)
             
             if(plot_house[i] == 1){
@@ -405,7 +419,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     }
     ##### 
     
-    #index of agents that are in the environment
+    #update hh_present
     hh_present <- which(hh_df$in_env == 1)
     
     # update residence time ####
@@ -434,21 +448,29 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     # leaving land
     # individuals that have reached leaving threshold must be removed from env
     
-    # TODO this will cause problems if agent leaves but leaves family on the plot?
-    
     for (i in 1:length(hh_present)){
+      print(c(i, hh_present[i]))
       threshold_status <- leaving_land(strategy = hh_df$strategy[hh_present[i]], capital_acc = hh_df$capital_acc[hh_present[i]], residence_length_total = hh_df$residence_length_total[hh_present[i]])
       
       if(threshold_status == "leave"){ 
-        # need to update hh_df: in_env and left_env, plot_pop, plot_id 
-        hh_df$in_env[hh_present][i] <- 0
-        hh_df$env_left[hh_present][i] <- t
+        # if agent is leaving first space on plot, and second place is occupied, move occupee of second place to first
+        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        plot_row <- plot_row_col[1]
         
-        plot_ids[which(plot_ids == hh_df$hh_id[hh_present][i], arr.ind = TRUE)] <- 0
-        plot_pop[which(plot_ids == hh_df$hh_id[hh_present][i], arr.ind = TRUE)[1]] <- 0
+        if((plot_row_col[2] == 1) & (plot_ids[plot_row, 2] != 0)){
+          plot_ids[plot_row, 1] <- plot_ids[plot_row, 2]
+          plot_ids[plot_row, 2] <- 0
+          plot_pop[plot_row] <- 1
+        } else{
+          plot_ids[plot_row_col] <- 0
+          plot_pop[plot_row] <- 0
+        }
+        
+        # need to update hh_df for agent: in_env and left_env
+        hh_df$in_env[hh_present[i]] <- 0
+        hh_df$env_left[hh_present[i]] <- t
       }
     }
-    
     
     #####
   }#t
