@@ -122,7 +122,6 @@ get_destination_squat <- function(plot_pop) {
     
     # chance of finding land, even when it is available
     if(rbinom(1, 1, 0.9) == 1){
-      
       if (length(empty_destinations) == 1)
         return(empty_destinations)
       else
@@ -163,7 +162,7 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
   # occupy!
   if ( destination > 0 ) {
     plot_pop[destination] <- plot_pop[destination] + 1
-    if ( plot_pop[destination] > plot_capacity ) {
+    if ( (plot_pop[destination] > plot_capacity) | (plot_pop[destination] < 0)) {
       print("##### THIS SHOULD NEVER HAPPEN! #####")
       print((plot_ids))
       print(destination)
@@ -180,8 +179,18 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
     hh_df$in_env[hh_index] <- 1
   }
   else {
-    # remove them from environment, can never come back, they ded
-    hh_df$in_env[hh_index] <- 0
+    
+    if (hh_df$in_env[hh_index] == 1) { # already in env previously, we have to kill
+      
+      # remove them from environment, can never come back, they ded
+      hh_df$in_env[hh_index] <- 0
+      
+      # update plot pop and plot ids
+      plot_index <- which(plot_ids == hh_df$hh_id[hh_index], arr.ind = TRUE)
+      if (length(plot_index) > 0) {
+        print(c('#################### problem in finding land', hh_index, plot_index))
+      }
+    }
     
     # update total mig
     hh_df$total_mig[hh_index] <- hh_df$total_mig[hh_index] + 1
@@ -269,14 +278,35 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   plot_house <- rep( 0 , N_plots )
   plot_ids <- matrix( 0 , nrow=N_plots , ncol=plot_capacity ) #matrix of plots to be filled with hh ids, plot_id index works as plot id
   
+  # initialize for loop output ####
+  # list for hh_df
+  hh_df_output <- list(1:tmax)
+  plot_ids_output <- list(1:tmax) 
+  
+  # matrix for plot_pop, plot_house, plot_ids
+  plot_pop_output <- matrix(0, nrow = tmax, ncol = N_plots)
+  plot_own_output <- matrix(0, nrow = tmax, ncol = N_plots)
+  plot_house_output <- matrix(0, nrow = tmax, ncol = N_plots)
+
+  
   #####
   
   # Timestep loop ####
   for (t in 1:tmax){
-    # print(c("Iteration ", t))
+    print(c("Iteration ", t))
     
     #index of agents that are in the environment
     hh_present <- which(hh_df$in_env == 1)
+    
+    print(c(plot_pop, "start"))
+    if(length(hh_present) > 0){
+      for (i in 1:length(hh_present)){
+        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        if (length(plot_row_col) == 0) {
+          print(c('bugabugabugabuga start', t, i, hh_present[i]))
+        }
+      }
+    }
     
     # for each hh, are there any relatives in_env?
     if(length(hh_present) > 0){
@@ -291,13 +321,22 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       }
     }
     
+    if(length(hh_present) > 0){
+      for (i in 1:length(hh_present)){
+        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        if (length(plot_row_col) == 0) {
+          print(c('bugabugabugabuga before internal mig', t, i, hh_present[i]))
+        }
+      }
+    }
+    
     # internal migration ####
     
     # stochastic, a few squatters have to relocate 
     # TODO want to parametrize how many? or maybe make this based on acc capital? If your situation got worse, you move?
     # find squatters (and fam on their plot), relocate 
     # find plots of squatters (agents that settled on empty land but don't own it)
-    squatter_plot_index <- which(plot_ids[,1] > 0 & plot_own == 0)
+    squatter_plot_index <- which((plot_ids[,1] > 0) & (plot_own == 0))
     
     # get 20%  of them
     squatter_plot_index <- sample(squatter_plot_index, (perc_sq*length(squatter_plot_index)), replace = FALSE)
@@ -310,6 +349,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       squatter_id <- squatter_id[squatter_id != 0]
       
       # remove squatters from plots and update plot ids, remove their family, update plot_pop, and residence length plot
+      # TODO is it fair to remove family from squat here?
       plot_ids[squatter_plot_index] <- 0
       plot_ids[,2][squatter_plot_index] <- 0
       plot_pop[squatter_plot_index] <- 0
@@ -320,13 +360,23 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       for (i in 1:length(squatter_id)){
         hh_index = squatter_id[i] # one agent
         
-        l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)       #this was coded a while ago and now seems clunky - look into
+        l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)   
         hh_df <- l[["hh_df"]]
         plot_ids <- l[["plot_ids"]]
         plot_pop <- l[["plot_pop"]]
       }
     }
     ##### 
+    
+    print(c(plot_pop, "internal mig"))
+    if(length(hh_present) > 0){
+      for (i in 1:length(hh_present)){
+        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        if (length(plot_row_col) == 0) {
+          print(c('bugabugabugabuga after internal mig', t, i, hh_present[i]))
+        }
+      }
+    }
     
     # Suburbans try to find empty land ####
     
@@ -350,18 +400,28 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
             
             # if they have found a new plot, remove them from all prior 
             plot_ids[,2][plot] <- 0
-            plot_pop[visitor_plots[i]] <- plot_pop[visitors_2[i]] - 1
+            plot_pop[plot] <- plot_pop[plot] - 1
             hh_df$residence_length_plot[visitors_2[i]] <- 0
             
             #put them in new plot & update total mig
             plot_pop[destination] <- plot_pop[destination] + 1
-            plot_ids[destination] <- hh_df$hh_id[visitors_2[i]]
+            plot_ids[destination] <- visitors_2[i]
             hh_df$total_mig[visitors_2[i]] <-  hh_df$total_mig[visitors_2[i]] + 1
           }
         }
       }
     }
     #####
+    
+    print(c(plot_pop, "visitors"))
+    if(length(hh_present) > 0){
+      for (i in 1:length(hh_present)){
+        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        if (length(plot_row_col) == 0) {
+          print(c('bugabugabugabuga after visitors', t, i, hh_present[i]))
+        }
+      }
+    }
     
     # inmigration of new migrants ####
     
@@ -377,6 +437,16 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       plot_pop <- l[["plot_pop"]]
     }
     #####
+    
+    print(c(plot_pop, "new mig"))
+    if(length(hh_present) > 0){
+      for (i in 1:length(hh_present)){
+        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        if (length(plot_row_col) == 0) {
+          print(c('bugabugabugabuga after new mig', t, i, hh_present[i]))
+        }
+      }
+    }
     
     # buying land ####
     
@@ -419,6 +489,8 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     }
     ##### 
     
+    
+    
     #update hh_present
     hh_present <- which(hh_df$in_env == 1)
     
@@ -447,17 +519,34 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     
     # leaving land
     # individuals that have reached leaving threshold must be removed from env
+
+    if(length(hh_present) > 0){
+      for (i in 1:length(hh_present)){
+        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        if (length(plot_row_col) == 0) {
+          print(c('bugabugabugabuga before leaving', t, i, hh_present[i]))
+        }
+      }
+    }
     
+    # TODO: should we check if hh_present is empty here as well???
     for (i in 1:length(hh_present)){
-      print(c(i, hh_present[i]))
+      # print(t)
+      # print(which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE))
+      # print(plot_pop)
+      # print(c(i, hh_present[i]))
+      
+      
       threshold_status <- leaving_land(strategy = hh_df$strategy[hh_present[i]], capital_acc = hh_df$capital_acc[hh_present[i]], residence_length_total = hh_df$residence_length_total[hh_present[i]])
       
       if(threshold_status == "leave"){ 
         # if agent is leaving first space on plot, and second place is occupied, move occupee of second place to first
+        
         plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        
         plot_row <- plot_row_col[1]
         
-        if((plot_row_col[2] == 1) & (plot_ids[plot_row, 2] != 0)){
+        if((plot_row_col[2] == 1) && (plot_ids[plot_row, 2] != 0)){
           plot_ids[plot_row, 1] <- plot_ids[plot_row, 2]
           plot_ids[plot_row, 2] <- 0
           plot_pop[plot_row] <- 1
@@ -472,15 +561,37 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       }
     }
     
+    hh_present <- which(hh_df$in_env == 1)
+    if(length(hh_present) > 0){
+      for (i in 1:length(hh_present)){
+        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
+        if (length(plot_row_col) == 0) {
+          print(c('bugabugabugabuga after leaving', t, i, hh_present[i]))
+        }
+      }
+    }
+    
+    print(c(plot_pop, "leaving"))
+    
+    
+    
+    # add output to list and matrix
+    hh_df_output[[t]] <- hh_df
+    plot_ids_output[[t]] <- plot_ids
+    plot_pop_output[t, ] <- plot_pop
+    plot_own_output[t, ] <- plot_own
+    plot_house_output[t, ] <- plot_house
+    
     #####
   }#t
   
   return(
     list( 
-      plot_own = plot_own,
-      plot_house = plot_house, 
-      ids = plot_ids,
-      hh_df = hh_df
+      hh_df_output = hh_df_output ,
+      plot_ids_output = plot_ids_output ,
+      plot_pop_output = plot_pop_output ,
+      plot_own_output = plot_own_output ,
+      plot_house_output = plot_house_output
     )
   )
   
@@ -503,7 +614,7 @@ df <- s[["hh_df"]]
 # how to include household composition in here (without making this a crazy model) atm just used for strategy and recorded at environment entry
 # how does experience with urb. env affect people differentially (in the capital shocks for example?)
 # btw shouldn't strategy also depend on where you are in the decision making process? i.e. if you're a land owner, does this change your strategy? most importantly household composition
-# there should also be some stochastic leaving for all agents
+# stochastic leaving for strategy 2?
 
 
 
