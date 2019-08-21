@@ -266,12 +266,11 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13=2, cap_thres_build=0) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13=2, cap_thres_build=0) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
   # param N_migrants: number of agents entering environment at each timestep
-  # param plot_capacity: number of agents that can stay at each plot, changing this would actually bream the abm atm
   # param N_fams: number of families in environment
   # param perc_sq: percent of squatters that have to move after each timestep
   # param cap_thres_st2: capital threshold needed for strategy 2 agents to buy land 
@@ -307,12 +306,13 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   }
   
   # init plots
+  plot_capacity <- 2 # hard-coded for now
   plot_pop <- rep( 0 , N_plots )
   plot_own <- rep( 0 , N_plots )
   plot_house <- rep( 0 , N_plots )
   plot_ids <- matrix( 0 , nrow=N_plots , ncol=plot_capacity ) #matrix of plots to be filled with hh ids, plot_id index works as plot id
   
-  # initialize for loop output ####
+  # initialize for loop output
   # lists for hh_df & plot_ids
   hh_df_output <- list(1:tmax)
   plot_ids_output <- list(1:tmax) 
@@ -347,11 +347,9 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       }
     }
     
-    
     # internal migration ####
     
-    # stochastic, a few squatters have to relocate 
-    # TODO want to parametrize how many? or maybe make this based on acc capital? If your situation got worse, you move?
+    # stochastic, a few squatters have to relocate, atm this is random 
     # find squatters (and fam on their plot), relocate 
     # find plots of squatters (agents that settled on empty land but don't own it)
     squatter_plot_index <- which((plot_ids[,1] > 0) & (plot_own == 0))
@@ -367,7 +365,6 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       squatter_id <- squatter_id[squatter_id != 0]
       
       # remove squatters from plots and update plot ids, remove their family, update plot_pop, and residence length plot
-      # TODO is it fair to remove family from squat here?
       plot_ids[squatter_plot_index] <- 0
       plot_ids[,2][squatter_plot_index] <- 0
       plot_pop[squatter_plot_index] <- 0
@@ -487,6 +484,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     hh_present <- which(hh_df$in_env == 1)
     
     # update residence time ####
+    
     # for agents that are in the environment, residence +1
     for (i in 1:length(hh_present)){
       hh_df$residence_length_total[hh_present][i] <- hh_df$residence_length_total[hh_present][i] + 1
@@ -497,7 +495,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     #####
     
     # stochastic shock to capital ####
-
+    
     # city life is a lottery
     # for agents in env, capital gets shocked, this difference is then accumulated over timesteps
     for (i in 1:length(hh_present)){
@@ -508,24 +506,23 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       hh_df$capital_acc[hh_present][i] <- hh_df$capital_acc[hh_present][i] + (hh_df$capital[hh_present][i] - hh_df$capital_tminusone[hh_present][i]) 
       
     }
+    #####
     
-    # leaving land
-    # individuals that have reached leaving threshold must be removed from env
-
     error_check(t, hh_df, plot_ids, plot_pop, message = "before leaving")
     
-
+    # leaving land ####
+    
+    # individuals that have reached leaving threshold must be removed from env
     for (i in 1:length(hh_present)){
       
       threshold_status <- leaving_land(strategy = hh_df$strategy[hh_present[i]], capital_acc = hh_df$capital_acc[hh_present[i]], residence_length_total = hh_df$residence_length_total[hh_present[i]])
       
       if(threshold_status == "leave"){ 
-        # if agent is leaving first space on plot, and second place is occupied, move occupee of second place to first
-        
+
         plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
-        
         plot_row <- plot_row_col[1]
-        
+
+        # if agent is leaving first space on plot, and second place is occupied, move occupee of second place to first, otherwise remove agent      
         if((plot_row_col[2] == 1) && (plot_ids[plot_row, 2] != 0)){
           plot_ids[plot_row, 1] <- plot_ids[plot_row, 2]
           plot_ids[plot_row, 2] <- 0
@@ -540,19 +537,16 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
         hh_df$env_left[hh_present[i]] <- t
       }
     }
+    ####
     
     error_check(t, hh_df, plot_ids, plot_pop, message = "after leaving ")
-    
-    
-    
+
     # add output to list and matrix
     hh_df_output[[t]] <- hh_df
     plot_ids_output[[t]] <- plot_ids
     plot_pop_output[t, ] <- plot_pop
     plot_own_output[t, ] <- plot_own
     plot_house_output[t, ] <- plot_house
-    
-    #####
   }#t
   
   return(
@@ -564,7 +558,6 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       plot_house_output = plot_house_output
     )
   )
-  
 }
 
 # s <- sim_ub(tmax=10,N_plots=100)
