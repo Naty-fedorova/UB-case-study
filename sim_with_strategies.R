@@ -230,6 +230,32 @@ leaving_land <- function(strategy, capital_acc, residence_length_total){
   return("stay")
 }
 
+error_check <- function(t, hh_df, plot_ids, plot_pop, message){
+# Function to print out if unexpected stuff happens
+  
+  for (i in 1:length(plot_pop)){
+    
+    if (plot_ids[i,1] == 0 & plot_ids[i,2] > 0) {
+      cat('\n####### ERROR ####### Second plot occupied when first is empty', message, t, i, plot_ids[i], '\n')
+    }
+    
+    n_plot_ids <- min(plot_ids[i,1], 1) + min(plot_ids[i,2], 1)
+    if (plot_pop[i] != n_plot_ids) {
+      cat('\n####### ERROR ####### plot_ids not synced with plot_pop', message, t, i, plot_ids[i], plot_pop[i], '\n')
+    }
+  }
+  
+  hh_present <- which(hh_df$in_env == 1)
+  if(length(hh_present) > 0){
+    for (i in 1:length(hh_present)){
+      plot_row_col <- which(plot_ids == hh_present[i], arr.ind = TRUE)
+      if (length(plot_row_col) == 0) {
+        cat('\n####### ERROR ####### hh_df$in_env not in sync with plot_ids', message, t, hh_present[i], plot_row_col, '\n')
+      }
+    }
+  }
+}
+
 # Simulation #########
 
 sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13=2, cap_thres_build=0) {
@@ -298,15 +324,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     #index of agents that are in the environment
     hh_present <- which(hh_df$in_env == 1)
     
-    print(c(plot_pop, "start"))
-    if(length(hh_present) > 0){
-      for (i in 1:length(hh_present)){
-        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
-        if (length(plot_row_col) == 0) {
-          print(c('bugabugabugabuga start', t, i, hh_present[i]))
-        }
-      }
-    }
+    error_check(t, hh_df, plot_ids, plot_pop, message = "start")
     
     # for each hh, are there any relatives in_env?
     if(length(hh_present) > 0){
@@ -321,14 +339,6 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       }
     }
     
-    if(length(hh_present) > 0){
-      for (i in 1:length(hh_present)){
-        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
-        if (length(plot_row_col) == 0) {
-          print(c('bugabugabugabuga before internal mig', t, i, hh_present[i]))
-        }
-      }
-    }
     
     # internal migration ####
     
@@ -368,15 +378,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     }
     ##### 
     
-    print(c(plot_pop, "internal mig"))
-    if(length(hh_present) > 0){
-      for (i in 1:length(hh_present)){
-        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
-        if (length(plot_row_col) == 0) {
-          print(c('bugabugabugabuga after internal mig', t, i, hh_present[i]))
-        }
-      }
-    }
+    error_check(t, hh_df, plot_ids, plot_pop, message = "after internal mig")
     
     # Suburbans try to find empty land ####
     
@@ -413,15 +415,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     }
     #####
     
-    print(c(plot_pop, "visitors"))
-    if(length(hh_present) > 0){
-      for (i in 1:length(hh_present)){
-        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
-        if (length(plot_row_col) == 0) {
-          print(c('bugabugabugabuga after visitors', t, i, hh_present[i]))
-        }
-      }
-    }
+    error_check(t, hh_df, plot_ids, plot_pop, message = "after visitors")
     
     # inmigration of new migrants ####
     
@@ -438,15 +432,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     }
     #####
     
-    print(c(plot_pop, "new mig"))
-    if(length(hh_present) > 0){
-      for (i in 1:length(hh_present)){
-        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
-        if (length(plot_row_col) == 0) {
-          print(c('bugabugabugabuga after new mig', t, i, hh_present[i]))
-        }
-      }
-    }
+    error_check(t, hh_df, plot_ids, plot_pop, message = "after new mig")
     
     # buying land ####
     
@@ -488,9 +474,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       }
     }
     ##### 
-    
-    
-    
+
     #update hh_present
     hh_present <- which(hh_df$in_env == 1)
     
@@ -520,22 +504,10 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
     # leaving land
     # individuals that have reached leaving threshold must be removed from env
 
-    if(length(hh_present) > 0){
-      for (i in 1:length(hh_present)){
-        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
-        if (length(plot_row_col) == 0) {
-          print(c('bugabugabugabuga before leaving', t, i, hh_present[i]))
-        }
-      }
-    }
+    error_check(t, hh_df, plot_ids, plot_pop, message = "before leaving")
     
-    # TODO: should we check if hh_present is empty here as well???
+
     for (i in 1:length(hh_present)){
-      # print(t)
-      # print(which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE))
-      # print(plot_pop)
-      # print(c(i, hh_present[i]))
-      
       
       threshold_status <- leaving_land(strategy = hh_df$strategy[hh_present[i]], capital_acc = hh_df$capital_acc[hh_present[i]], residence_length_total = hh_df$residence_length_total[hh_present[i]])
       
@@ -549,10 +521,10 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
         if((plot_row_col[2] == 1) && (plot_ids[plot_row, 2] != 0)){
           plot_ids[plot_row, 1] <- plot_ids[plot_row, 2]
           plot_ids[plot_row, 2] <- 0
-          plot_pop[plot_row] <- 1
+          plot_pop[plot_row] <- plot_pop[plot_row] - 1
         } else{
           plot_ids[plot_row_col] <- 0
-          plot_pop[plot_row] <- 0
+          plot_pop[plot_row] <- plot_pop[plot_row] - 1
         }
         
         # need to update hh_df for agent: in_env and left_env
@@ -561,17 +533,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
       }
     }
     
-    hh_present <- which(hh_df$in_env == 1)
-    if(length(hh_present) > 0){
-      for (i in 1:length(hh_present)){
-        plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
-        if (length(plot_row_col) == 0) {
-          print(c('bugabugabugabuga after leaving', t, i, hh_present[i]))
-        }
-      }
-    }
-    
-    print(c(plot_pop, "leaving"))
+    error_check(t, hh_df, plot_ids, plot_pop, message = "after leaving ")
     
     
     
