@@ -231,20 +231,28 @@ leaving_land <- function(strategy, capital_acc, residence_length_total){
 }
 
 error_check <- function(t, hh_df, plot_ids, plot_pop, message){
-# Function to print out if unexpected stuff happens
-  
+  # Function to print out if unexpected stuff happens
+  # param t: timestep
+  # param hh_df: dataframe containing info about agents
+  # param plot_ids: matrix of plots, n of columns = plot_capacity
+  # param plot_pop: vector of plot population 
+  # param message: informative message about location in code, to be entered
+
   for (i in 1:length(plot_pop)){
     
+    # check if seconds plots are never occupied if first plot is empty
     if (plot_ids[i,1] == 0 & plot_ids[i,2] > 0) {
       cat('\n####### ERROR ####### Second plot occupied when first is empty', message, t, i, plot_ids[i], '\n')
     }
     
+    # check if plot_pop is tracking plot_ids
     n_plot_ids <- min(plot_ids[i,1], 1) + min(plot_ids[i,2], 1)
     if (plot_pop[i] != n_plot_ids) {
       cat('\n####### ERROR ####### plot_ids not synced with plot_pop', message, t, i, plot_ids[i], plot_pop[i], '\n')
     }
   }
   
+  # check if in_env is tracking plot_ids occupation
   hh_present <- which(hh_df$in_env == 1)
   if(length(hh_present) > 0){
     for (i in 1:length(hh_present)){
@@ -263,7 +271,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   # param tmax: number of runs
   # param N_plots: number of plots in environment
   # param N_migrants: number of agents entering environment at each timestep
-  # param plot_capacity: number of agents that can stay at each plot
+  # param plot_capacity: number of agents that can stay at each plot, changing this would actually bream the abm atm
   # param N_fams: number of families in environment
   # param perc_sq: percent of squatters that have to move after each timestep
   # param cap_thres_st2: capital threshold needed for strategy 2 agents to buy land 
@@ -305,11 +313,11 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   plot_ids <- matrix( 0 , nrow=N_plots , ncol=plot_capacity ) #matrix of plots to be filled with hh ids, plot_id index works as plot id
   
   # initialize for loop output ####
-  # list for hh_df
+  # lists for hh_df & plot_ids
   hh_df_output <- list(1:tmax)
   plot_ids_output <- list(1:tmax) 
   
-  # matrix for plot_pop, plot_house, plot_ids
+  # matrices for plot_pop, plot_house, plot_ids
   plot_pop_output <- matrix(0, nrow = tmax, ncol = N_plots)
   plot_own_output <- matrix(0, nrow = tmax, ncol = N_plots)
   plot_house_output <- matrix(0, nrow = tmax, ncol = N_plots)
@@ -319,7 +327,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   
   # Timestep loop ####
   for (t in 1:tmax){
-    print(c("Iteration ", t))
+    #print(c("Iteration ", t))
     
     #index of agents that are in the environment
     hh_present <- which(hh_df$in_env == 1)
@@ -561,7 +569,6 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
 
 s <- sim_ub(tmax=10,N_plots=100)
 
-df <- s[["hh_df"]]
 
 
 
