@@ -567,11 +567,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, plot_capacity=2, N_fams
   
 }
 
-s <- sim_ub(tmax=10,N_plots=100)
-
-
-
-
+# s <- sim_ub(tmax=10,N_plots=100)
 
 # Notes
 
@@ -584,6 +580,23 @@ s <- sim_ub(tmax=10,N_plots=100)
 # how does experience with urb. env affect people differentially (in the capital shocks for example?)
 # btw shouldn't strategy also depend on where you are in the decision making process? i.e. if you're a land owner, does this change your strategy? most importantly household composition
 # stochastic leaving for strategy 2?
+
+
+# Code for running on Cluster #####
+
+# make a grid of parameter combinations
+jobs <- expand.grid() # enter parameter ranges
+
+# convert to a list of parameter vectors
+jobs_list <- as.list( as.data.frame(t(jobs)) )
+
+# farm out to cores
+
+#install.packages(parallel)?
+library(parallel) 
+results <- mclapply( jobs_list , sim_ub , mc.cores=3 )
+
+
 
 
 
