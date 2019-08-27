@@ -279,10 +279,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2,
   # return: details of the environment after simulation runs: plot_own, plot_house, plot_ids,hh_df (dataframe tracking agents)
   
   # init ####
-  print(tmax)
-  print(N_migrants)
   N_hh <- tmax*N_migrants    # init agents (number of households)
-  print(N_hh)
   hh_id <- 1:N_hh
   fam_id <- sample( 1:N_fams , size=N_hh, replace = TRUE)
   strategy <- rep(0, times=N_hh)
@@ -576,32 +573,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2,
 # stochastic leaving for strategy 2?
 
 
-# Code for running on Cluster #####
 
-# make a grid of parameter combinations
-# here set to defaults
-jobs <- expand.grid(tmax=10, 
-                    N_plots=100, 
-                    N_migrants=20, 
-                    N_fams=20, 
-                    perc_sq=0.2, 
-                    cap_thres_st2=0, 
-                    cap_thres_st13=2, 
-                    cap_thres_build=0
-) # enter parameter ranges
-
-# convert to a list of parameter vectors
-jobs_list <- as.list( as.data.frame(t(jobs)) )
-
-# farm out to cores
-library(parallel)
-
-sim_ub_arg_list <- function(arg_list) {
-  return(sim_ub(arg_list[1], arg_list[2], arg_list[3], arg_list[4], arg_list[5], arg_list[6], arg_list[7], arg_list[8])) # arg_list needs to be manually updated if sim_ub function inputs changed (i.e. param added/removed)
-}
-
-
-results <- mclapply( jobs_list , sim_ub_arg_list, mc.cores = 3)
 
 
 
