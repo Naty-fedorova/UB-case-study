@@ -1,11 +1,10 @@
 # Code for running on Cluster #####
 
 # source sim function
-source("sim_with_strategies")
+source("sim_with_strategies.R")
 
 
-# make a grid of parameter combinations
-# here set to defaults
+# here set to defaults ####
 jobs_default <- expand.grid(tmax=10, 
                     N_plots=100, 
                     N_migrants=20, 
@@ -17,10 +16,32 @@ jobs_default <- expand.grid(tmax=10,
 ) # enter parameter ranges
 
 # convert to a list of parameter vectors
-jobs_default_list <- as.list( as.data.frame(t(jobs_default)) )
+run_sim <- 2
+jobs_default_list <- list(1:run_sim) 
+jobs_default_list[1:run_sim] <- as.list( as.data.frame(t(jobs_default)) )
+
+####
+
+# testing multiple sims of most likely values, these are to be updated with pilot data ####
+# run this run_sim times
+jobs_realistic <- expand.grid(tmax=30, 
+                              N_plots=5000, 
+                              N_migrants=1000, 
+                              N_fams=20000, 
+                              perc_sq=0.2, 
+                              cap_thres_st2=0, 
+                              cap_thres_st13=2, 
+                              cap_thres_build=0
+) # enter parameter ranges
+
+# convert to a list of parameter vectors
+run_sim <- 2
+jobs_realistic_list <- list(1:run_sim)     # number of times I want the parameter combination repeated
+jobs_realistic_list[1:run_sim] <- as.list( as.data.frame(t(jobs_realistic)) )
+####
 
 
-# testing min, middle, and max values
+# testing min, middle, and max values ####
 jobs_test <- expand.grid(tmax= c(1, 30, 100),                  # tmax should roughly correspond to years, in the study site this is 30 
                             N_plots= c(10, 100, 3000),            # based on khoroo, but should be in teh 1000s
                             N_migrants=c(10, 100, 1000),          # n of people coming into each khoroo every timestep, should be quite high also but less then max plots
@@ -34,27 +55,32 @@ jobs_test <- expand.grid(tmax= c(1, 30, 100),                  # tmax should rou
 # convert to a list of parameter vectors
 jobs_test_list <- as.list( as.data.frame(t(jobs_test)) )
 
-# testing multiple sims of most likely values, these are to be updated with pilot data
-# run this 1000 times
-jobs_realistic <- expand.grid(tmax=30, 
-                            N_plots=5000, 
-                            N_migrants=1000, 
-                            N_fams=20000, 
-                            perc_sq=0.2, 
-                            cap_thres_st2=0, 
-                            cap_thres_st13=2, 
-                            cap_thres_build=0
+####
+
+# testing changing parameter values ####
+jobs_change <- expand.grid(tmax=30, 
+                              N_plots=1000, 
+                              N_migrants=200, 
+                              N_fams=10000, 
+                              perc_sq= seq() ,  
+                              cap_thres_st2=0, 
+                              cap_thres_st13=2, 
+                              cap_thres_build=0
 ) # enter parameter ranges
 
 # convert to a list of parameter vectors
-jobs_realistic_list <- as.list( as.data.frame(t(jobs_realistic)) )
+run_sim <- 2
+jobs_change_list <- list(1:run_sim)     # number of times I want the parameter combination repeated
+jobs_change_list[1:run_sim] <- as.list( as.data.frame(t(jobs_change)) )
 
 
 
 
 
 
-# farm out to cores
+
+
+# farm out to cores ####
 library(parallel)
 
 sim_ub_arg_list <- function(arg_list) {
@@ -62,4 +88,4 @@ sim_ub_arg_list <- function(arg_list) {
 }
 
 
-results <- mclapply( jobs_list , sim_ub_arg_list, mc.cores = 3)
+results <- mclapply( jobs_list , sim_ub_arg_list, mc.cores = 3)       # update name of required job list before running  

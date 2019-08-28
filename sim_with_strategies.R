@@ -13,7 +13,7 @@ strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
   
   # for urban strategy
   if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 3) & possessions == 0 & intend_stay == 1) {
-   sample(1:3, 1, prob = c(.60, .20, .20) )
+    sample(1:3, 1, prob = c(.60, .20, .20) )
   }
   
   # for suburban strategy
@@ -237,7 +237,7 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
   # param plot_ids: matrix of plots, n of columns = plot_capacity
   # param plot_pop: vector of plot population 
   # param message: informative message about location in code, to be entered
-
+  
   for (i in 1:length(plot_pop)){
     
     # check if seconds plots are never occupied if first plot is empty
@@ -266,8 +266,9 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13=2, cap_thres_build=0) {
+sim_ub <- function( smax = 2, tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13=2, cap_thres_build=0) {
   # Master function for ABM
+  # param smax: number of times simulation repeats under specified param combinations
   # param tmax: number of runs
   # param N_plots: number of plots in environment
   # param N_migrants: number of agents entering environment at each timestep
@@ -320,7 +321,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2,
   plot_pop_output <- matrix(0, nrow = tmax, ncol = N_plots)
   plot_own_output <- matrix(0, nrow = tmax, ncol = N_plots)
   plot_house_output <- matrix(0, nrow = tmax, ncol = N_plots)
-
+  
   
   #####
   
@@ -429,7 +430,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2,
       hh_index <- (t-1)*N_migrants + i #one agent
       
       l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)
-    
+      
       hh_df <- l[["hh_df"]]
       plot_ids <- l[["plot_ids"]]
       plot_pop <- l[["plot_pop"]]
@@ -478,7 +479,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2,
       }
     }
     ##### 
-
+    
     #update hh_present
     hh_present <- which(hh_df$in_env == 1)
     
@@ -517,10 +518,10 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2,
       threshold_status <- leaving_land(strategy = hh_df$strategy[hh_present[i]], capital_acc = hh_df$capital_acc[hh_present[i]], residence_length_total = hh_df$residence_length_total[hh_present[i]])
       
       if(threshold_status == "leave"){ 
-
+        
         plot_row_col <- which(plot_ids == hh_df$hh_id[hh_present[i]], arr.ind = TRUE)
         plot_row <- plot_row_col[1]
-
+        
         # if agent is leaving first space on plot, and second place is occupied, move occupee of second place to first, otherwise remove agent      
         if((plot_row_col[2] == 1) && (plot_ids[plot_row, 2] != 0)){
           plot_ids[plot_row, 1] <- plot_ids[plot_row, 2]
@@ -539,13 +540,14 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2,
     ####
     
     error_check(t, hh_df, plot_ids, plot_pop, message = "after leaving ")
-
+    
     # add output to list and matrix
     hh_df_output[[t]] <- hh_df
     plot_ids_output[[t]] <- plot_ids
     plot_pop_output[t, ] <- plot_pop
     plot_own_output[t, ] <- plot_own
     plot_house_output[t, ] <- plot_house
+    
   }#t
   
   return(
@@ -558,6 +560,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2,
     )
   )
 }
+
 
 
 # Notes
