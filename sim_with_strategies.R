@@ -266,9 +266,8 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( smax = 2, tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13=2, cap_thres_build=0) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=rep(0.2, tmax), cap_thres_st2=rep(0, tmax), cap_thres_st13=rep(2, tmax), cap_thres_build=rep(0, tmax)) {
   # Master function for ABM
-  # param smax: number of times simulation repeats under specified param combinations
   # param tmax: number of runs
   # param N_plots: number of plots in environment
   # param N_migrants: number of agents entering environment at each timestep
@@ -355,7 +354,7 @@ sim_ub <- function( smax = 2, tmax=10, N_plots=100, N_migrants=20, N_fams=20, pe
     squatter_plot_index <- which((plot_ids[,1] > 0) & (plot_own == 0))
     
     # get 20%  of them
-    squatter_plot_index <- sample(squatter_plot_index, (perc_sq*length(squatter_plot_index)), replace = FALSE)
+    squatter_plot_index <- sample(squatter_plot_index, (perc_sq[t]*length(squatter_plot_index)), replace = FALSE)
     
     if(length(squatter_plot_index) > 0){
       # get squatter and fam ID so they can move later
@@ -449,12 +448,12 @@ sim_ub <- function( smax = 2, tmax=10, N_plots=100, N_migrants=20, N_fams=20, pe
       # get own occupied patches
       if(plot_ids[i,1] > 0){
         # if strategy is suburban (2), their capital is more than 0, and they are living on their own plot, they can buy the land (stochastic)
-        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2 & plot_own[i] == 0 & hh_df$strategy[plot_ids[i,1]] == 2){  
+        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2[t] & plot_own[i] == 0 & hh_df$strategy[plot_ids[i,1]] == 2){  
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
         }
         
         #if strategy is urban (1) or temporary (3), their capital more than 2, and they are living on their own plot, they can buy the land (stochastic)
-        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st13 & plot_own[i] == 0 & (hh_df$strategy[plot_ids[i,1]] == 1 | hh_df$strategy[plot_ids[i,1]] == 3)){ 
+        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st13[t] & plot_own[i] == 0 & (hh_df$strategy[plot_ids[i,1]] == 1 | hh_df$strategy[plot_ids[i,1]] == 3)){ 
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
         }
       }
@@ -468,7 +467,7 @@ sim_ub <- function( smax = 2, tmax=10, N_plots=100, N_migrants=20, N_fams=20, pe
     for (i in 1:length(plot_own)){
       if(plot_ids[i,1] > 0){ # if the agent is still present
         if(plot_own[i] == 1){
-          if((plot_house[i] == 0 & hh_df$capital[plot_ids[i,1]] >= cap_thres_build) | (plot_house[i] == 0 & hh_df$fam_in_env[plot_ids[i,1]] ==1)){
+          if((plot_house[i] == 0 & hh_df$capital[plot_ids[i,1]] >= cap_thres_build[t]) | (plot_house[i] == 0 & hh_df$fam_in_env[plot_ids[i,1]] ==1)){
             plot_house[i] <- rbinom(1, 1, 0.7)
             
             if(plot_house[i] == 1){
