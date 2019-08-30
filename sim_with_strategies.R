@@ -266,7 +266,7 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=rep(0.2, tmax), cap_thres_st2=rep(0, tmax), cap_thres_st13=rep(2, tmax), cap_thres_build=rep(0, tmax)) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=rep(0.2, tmax), cap_thres_st2=rep(0, tmax), cap_thres_st13=rep(2, tmax), cap_thres_build=rep(0, tmax), res_log = 1) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
@@ -276,6 +276,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=rep(
   # param cap_thres_st2: capital threshold needed for strategy 2 agents to buy land 
   # param cap_thres_st13: capital threshold needed for strategy 1 and 3 agents to buy land
   # param cap_thres_build: capital threshold needed for house building
+  # param res_log: for if statements that decides whether outputs are saved for each timestep (1) or only for the last time step (0)
   # return: details of the environment after simulation runs: plot_own, plot_house, plot_ids,hh_df (dataframe tracking agents)
   
   # init ####
@@ -540,12 +541,20 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=rep(
     
     error_check(t, hh_df, plot_ids, plot_pop, message = "after leaving ")
     
-    # add output to list and matrix
-    hh_df_output[[t]] <- hh_df
-    plot_ids_output[[t]] <- plot_ids
-    plot_pop_output[t, ] <- plot_pop
-    plot_own_output[t, ] <- plot_own
-    plot_house_output[t, ] <- plot_house
+    if(res_log == 1){ #save output for each timestep
+      # add output to list and matrix
+      hh_df_output[[t]] <- hh_df
+      plot_ids_output[[t]] <- plot_ids
+      plot_pop_output[t, ] <- plot_pop
+      plot_own_output[t, ] <- plot_own
+      plot_house_output[t, ] <- plot_house
+    } else{          #save output for last timestep only 
+      hh_df_output <- hh_df
+      plot_ids_output<- plot_ids
+      plot_pop_output<- plot_pop
+      plot_own_output<- plot_own
+      plot_house_output<- plot_house
+    }
     
   }#t
   
