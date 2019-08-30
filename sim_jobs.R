@@ -10,6 +10,7 @@ sim_ub_arg_list <- function(arg_list) {
 }
 
 # here set to defaults ####
+tmax <- 10
 jobs_default <- expand.grid(tmax=10, 
                     N_plots=100, 
                     N_migrants=20, 
@@ -56,7 +57,7 @@ results_realistic <- mclapply( jobs_realistic_list , sim_ub_arg_list, mc.cores =
 
 # testing min, middle, and max values ####
 jobs_test <- expand.grid(tmax= c(30, 100),                  # tmax should roughly correspond to years, in the study site this is 30 
-                            N_plots= c(10, 100, 3000),            # based on khoroo, but should be in teh 1000s
+                            N_plots= c(10, 100, 3000),            # based on khoroo, but should be in the 1000s
                             N_migrants=c(10, 100, 1000),          # n of people coming into each khoroo every timestep, should be quite high also but less then max plots
                             N_fams= c(1, 100, 10000),             # everyone has the same fam, resonable chance of having fam in each timestep, low chance of having any fam in env
                             perc_sq=c(0, 0.5, 1),                 # no squatters, half squatters move, all squatters move
@@ -68,7 +69,7 @@ jobs_test <- expand.grid(tmax= c(30, 100),                  # tmax should roughl
 
 # convert to a list of parameter vectors
 run_sim <- 1
-jobs_realistic_list <- list(1:run_sim)  
+jobs_test_list <- list(1:run_sim)  
 jobs_test_list <- as.list( as.data.frame(t(jobs_test)) )
 
 # farm out to cores ####

@@ -266,7 +266,7 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=rep(0.2, tmax), cap_thres_st2=rep(0, tmax), cap_thres_st13=rep(2, tmax), cap_thres_build=rep(0, tmax), res_log = 1) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, res_log = 1) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
@@ -278,6 +278,13 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=rep(
   # param cap_thres_build: capital threshold needed for house building
   # param res_log: for if statements that decides whether outputs are saved for each timestep (1) or only for the last time step (0)
   # return: details of the environment after simulation runs: plot_own, plot_house, plot_ids,hh_df (dataframe tracking agents)
+  
+  #vectorize parameters
+  perc_sq <- rep(perc_sq, tmax)
+  cap_thres_st2 <- rep(cap_thres_st2, tmax)
+  cap_thres_st13 <- rep(cap_thres_st13, tmax)
+  cap_thres_build <- rep(cap_thres_build, tmax)
+  
   
   # init ####
   N_hh <- tmax*N_migrants    # init agents (number of households)
