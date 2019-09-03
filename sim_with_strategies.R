@@ -1,6 +1,6 @@
 # Functions ####
 
-strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
+strategy_assignment <- function(possessions, HC_at_move, intend_stay, strat_prob) {
   # This functions assigns one of three strategies to each agent (household)
   # they can either be assigned urban (1), suburban (2), or temporary (3)
   # strategy is a product of internat preference , possesions outside UB, and household composition at move
@@ -266,7 +266,7 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0.6, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, res_log = 1) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0.6, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, res_log = 0) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
@@ -309,7 +309,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0
   
   # strategy assignment
   for (i in 1:nrow(hh_df)){
-    hh_df$strategy[i] <- strategy_assignment(possessions = hh_df$possessions[i], HC_at_move = hh_df$HC_at_move[i], intend_stay = hh_df$intend_stay[i])
+    hh_df$strategy[i] <- strategy_assignment(possessions = hh_df$possessions[i], HC_at_move = hh_df$HC_at_move[i], intend_stay = hh_df$intend_stay[i], strat_prob = strat_prob)
   }
   
   # init plots

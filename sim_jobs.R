@@ -6,7 +6,7 @@ source("sim_with_strategies.R")
 library(parallel)
 
 sim_ub_arg_list <- function(arg_list) {
-  return(sim_ub(arg_list[1], arg_list[2], arg_list[3], arg_list[4], arg_list[5], arg_list[6], arg_list[7], arg_list[8], arg_list[9] )) # arg_list needs to be manually updated if sim_ub function inputs changed (i.e. param added/removed)
+  return(sim_ub(arg_list[1], arg_list[2], arg_list[3], arg_list[4], arg_list[5], arg_list[6], arg_list[7], arg_list[8], arg_list[9], arg_list[10])) # arg_list needs to be manually updated if sim_ub function inputs changed (i.e. param added/removed)
 }
 
 # here set to defaults ####
@@ -147,6 +147,18 @@ jobs_strat_list <- as.list( as.data.frame(t(jobs_strat)) )
 
 # farm out to cores ####
 results_strat <- mclapply( jobs_strat_list , sim_ub_arg_list, mc.cores = 50) 
+
+# write results
+# TODO this will only work if a. there aren't multiple timesteps logged, b. there aren't multiple simulation runs
+write.csv(results_strat$hh_df, file = "res_strat_hhdf.csv")
+df <- cbind(as.data.frame(results_strat$plot_ids_output), results_strat$plot_own_output, results_strat$plot_house_output, results_strat$plot_pop_output)
+write.csv(df, file = "res_strat_plots.csv")
+
+
 ####
+
+
+
+
 
 
