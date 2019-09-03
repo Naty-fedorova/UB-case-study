@@ -13,17 +13,17 @@ strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
   
   # for urban strategy
   if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 3) & possessions == 0 & intend_stay == 1) {
-    sample(1:3, 1, prob = c(.60, .20, .20) )
+    sample(1:3, 1, prob = c(strat_prob, (1-strat_prob)/2 , (1-strat_prob)/2) )
   }
   
   # for suburban strategy
   if ((HC_at_move == 4 | HC_at_move == 5) & possessions == 0 & intend_stay == 1) {
-    sample(1:3, 1, prob = c(.20, .60, .20) )
+    sample(1:3, 1, prob = c((1-strat_prob)/2, strat_prob, (1-strat_prob)/2) )
   }
   
   # for temporary strategy
   if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 5 | HC_at_move == 6 ) & possessions == 1 & intend_stay == 0) {
-    sample(1:3, 1, prob = c(.20, .20, .60) )
+    sample(1:3, 1, prob = c((1-strat_prob)/2, (1-strat_prob)/2, strat_prob) )
   } else{
     # if none of these combinations are fulfilled, just random sample
     sample(1:3, 1)
@@ -266,7 +266,7 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, res_log = 1) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0.6, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, res_log = 1) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
