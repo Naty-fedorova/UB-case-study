@@ -29,7 +29,8 @@ jobs_default_list <- list(1:run_sim)
 jobs_default_list[1:run_sim] <- as.list( as.data.frame(t(jobs_default)) )
 
 # farm out to cores ####
-results_default <- mclapply( jobs_default_list , sim_ub_arg_list, mc.cores = 50)      
+results_default <- mclapply( jobs_default_list , sim_ub_arg_list, mc.cores = 50)  
+
 
 ####
 
@@ -149,11 +150,8 @@ jobs_strat_list <- as.list( as.data.frame(t(jobs_strat)) )
 results_strat <- mclapply( jobs_strat_list , sim_ub_arg_list, mc.cores = 50) 
 
 # write results
-# TODO this will only work if a. there aren't multiple timesteps logged, b. there aren't multiple simulation runs
-write.csv(results_strat$hh_df, file = "res_strat_hhdf.csv")
-df <- cbind(as.data.frame(results_strat$plot_ids_output), results_strat$plot_own_output, results_strat$plot_house_output, results_strat$plot_pop_output)
-write.csv(df, file = "res_strat_plots.csv")
 
+save(c(results_default, results_realistic, results_test, results_change, results_capvar, results_strat), file = "output.Rdata")
 
 ####
 
