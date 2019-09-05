@@ -6,7 +6,7 @@ source("sim_with_strategies.R")
 library(parallel)
 
 sim_ub_arg_list <- function(arg_list) {
-  return(sim_ub(arg_list[1], arg_list[2], arg_list[3], arg_list[4], arg_list[5], arg_list[6], arg_list[7], arg_list[8], arg_list[9], arg_list[10])) # arg_list needs to be manually updated if sim_ub function inputs changed (i.e. param added/removed)
+  return(sim_ub(arg_list[1], arg_list[2], arg_list[3], arg_list[4], arg_list[5], arg_list[6], arg_list[7], arg_list[8], arg_list[9], arg_list[10], arg_list[11], arg_list[12])) # arg_list needs to be manually updated if sim_ub function inputs changed (i.e. param added/removed)
 }
 
 # here set to defaults ####
@@ -20,6 +20,8 @@ jobs_default <- expand.grid(tmax=10,
                     cap_thres_st2=0, 
                     cap_thres_st13=2, 
                     cap_thres_build=0,
+                    cap_shock_mean=1,
+                    cap_shock_dev=0.25,
                     res_log=0
 ) # enter parameter ranges
 
@@ -45,6 +47,8 @@ jobs_realistic <- expand.grid(tmax=30,
                               cap_thres_st2=0, 
                               cap_thres_st13=2, 
                               cap_thres_build=0,
+                              cap_shock_mean=2,
+                              cap_shock_dev=0.5,
                               res_log=0
 ) # enter parameter ranges
 
@@ -68,12 +72,12 @@ jobs_test <- expand.grid(tmax= c(30, 100),                        # tmax should 
                             cap_thres_st2=c(-1, 0, 1),            # just went for 1 sd either direction
                             cap_thres_st13=c(-2, 0, 2),           # went for 2 sd either direction
                             cap_thres_build=c(-1, 0, 1),          # just went for 1 sd either direction
+                            cap_shock_mean=c(-1, 0, 1),
+                            cap_shock_dev=c(0.1, 0.5, 1),
                             res_log=0
 ) # enter parameter ranges
 
 # convert to a list of parameter vectors
-run_sim <- 1
-jobs_test_list <- list(1:run_sim)  
 jobs_test_list <- as.list( as.data.frame(t(jobs_test)) )
 
 # farm out to cores ####
@@ -92,12 +96,12 @@ jobs_change <- expand.grid(tmax=tmax,
                               cap_thres_st2=c((seq(from = -2, to = 2, length.out = tmax)), (seq(from = 2, to = -2, length.out = tmax)), (sample((seq(from = 2, to = -2, length.out = tmax)), tmax)) ), 
                               cap_thres_st13=c((seq(from = -2, to = 2, length.out = tmax)), (seq(from = 2, to = -2, length.out = tmax)), (sample((seq(from = 2, to = -2, length.out = tmax)), tmax)) ), 
                               cap_thres_build=c((seq(from = -2, to = 2, length.out = tmax)), (seq(from = 2, to = -2, length.out = tmax)), (sample((seq(from = 2, to = -2, length.out = tmax)), tmax)) ),
+                              cap_shock_mean=1,
+                              cap_shock_dev=0.25,
                               res_log=1
 ) # enter parameter ranges
 
 # convert to a list of parameter vectors
-run_sim <- 1
-jobs_change_list <- list(1:run_sim)     # number of times I want the parameter combination repeated
 jobs_change_list[1:run_sim] <- as.list( as.data.frame(t(jobs_change)) )
 
 # farm out to cores ####
@@ -114,13 +118,13 @@ jobs_capvar <- expand.grid(tmax= 30,
                          perc_sq= 0.2,                 
                          cap_thres_st2=c(-2, -1, 0, 1, 2),          
                          cap_thres_st13=c(-2, -1, 0, 1, 2),          
-                         cap_thres_build=c(-2, -1, 0, 1, 2),         
+                         cap_thres_build=c(-2, -1, 0, 1, 2), 
+                         cap_shock_mean=c(-2, -1, 0, 1, 2),
+                         cap_shock_dev=c(0, 0.5, 1),
                          res_log=0
 ) # enter parameter ranges
 
 # convert to a list of parameter vectors
-run_sim <- 1
-jobs_capvar_list <- list(1:run_sim)  
 jobs_capvar_list <- as.list( as.data.frame(t(jobs_capvar)) )
 
 # farm out to cores ####
@@ -137,13 +141,13 @@ jobs_strat <- expand.grid(tmax= 30,
                            perc_sq= 0.2,                 
                            cap_thres_st2= 0 ,          
                            cap_thres_st13= 2,          
-                           cap_thres_build= 0,         
+                           cap_thres_build= 0, 
+                           cap_shock_mean=1,
+                           cap_shock_dev=0.25,
                            res_log=0
 ) # enter parameter ranges
 
 # convert to a list of parameter vectors
-run_sim <- 1
-jobs_strat_list <- list(1:run_sim)  
 jobs_strat_list <- as.list( as.data.frame(t(jobs_strat)) )
 
 # farm out to cores ####

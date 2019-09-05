@@ -266,7 +266,7 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0.6, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, res_log = 0) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0.6, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, cap_shock_mean = 1, cap_shock_dev = 0.25, res_log = 0) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
@@ -276,6 +276,8 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0
   # param cap_thres_st2: capital threshold needed for strategy 2 agents to buy land 
   # param cap_thres_st13: capital threshold needed for strategy 1 and 3 agents to buy land
   # param cap_thres_build: capital threshold needed for house building
+  # param cap_shock_mean: mean of rnorm that adds shock to capital at each timestep
+  # param cap_shock_dev: stdev of rnorm that adds shock to capital at each timestep
   # param res_log: for if statements that decides whether outputs are saved for each timestep (1) or only for the last time step (0)
   # return: details of the environment after simulation runs: plot_own, plot_house, plot_ids,hh_df (dataframe tracking agents)
   
@@ -284,6 +286,8 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0
   cap_thres_st2 <- rep(cap_thres_st2, tmax)
   cap_thres_st13 <- rep(cap_thres_st13, tmax)
   cap_thres_build <- rep(cap_thres_build, tmax)
+  cap_shock_mean <- rep(cap_shock_mean, tmax)
+  cap_shock_dev <- rep(cap_shock_dev, tmax)
   
   
   # init ####
@@ -509,7 +513,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0
       hh_df$capital_tminusone[hh_present][i] <- hh_df$capital[hh_present][i]
       
       # TODO level of capital shock (improvement or not) can be determined from pilot data
-      hh_df$capital[hh_present][i] <- hh_df$capital[hh_present][i] + rnorm(1, 0, 0.25) 
+      hh_df$capital[hh_present][i] <- hh_df$capital[hh_present][i] + rnorm(1, mean = cap_shock_mean[t], sd = cap_shock_dev[t]) 
       hh_df$capital_acc[hh_present][i] <- hh_df$capital_acc[hh_present][i] + (hh_df$capital[hh_present][i] - hh_df$capital_tminusone[hh_present][i]) 
       
     }
