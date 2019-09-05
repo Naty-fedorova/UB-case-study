@@ -64,7 +64,7 @@ plotprop_plot_single <- function(output, plot_ids_output, plot_own_output, plot_
   
   counts <- table(in_env$strategy, in_env$cat)
   
-  barplot(t(counts), beside = FALSE)
+  barplot(t(counts), beside = TRUE)
   
 }
 
