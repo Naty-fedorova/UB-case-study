@@ -1,5 +1,7 @@
 # Functions ####
 
+set.seed(1)
+
 strategy_assignment <- function(possessions, HC_at_move, intend_stay, strat_prob) {
   # This functions assigns one of three strategies to each agent (household)
   # they can either be assigned urban (1), suburban (2), or temporary (3)

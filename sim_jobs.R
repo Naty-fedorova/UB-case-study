@@ -61,9 +61,33 @@ jobs_realistic_list[1:run_sim] <- as.list( as.data.frame(t(jobs_realistic)) )
 results_realistic <- mclapply( jobs_realistic_list , sim_ub_arg_list, mc.cores = 50) 
 ####
 
+# example of settling process  - realistic but save each timestep ####
+
+jobs_realistic_seq <- expand.grid(tmax=30, 
+                              N_plots=5000, 
+                              N_migrants=1000, 
+                              N_fams=20000,
+                              strat_prob= 0.6,
+                              perc_sq=0.2, 
+                              cap_thres_st2=0, 
+                              cap_thres_st13=2, 
+                              cap_thres_build=0,
+                              cap_shock_mean=2,
+                              cap_shock_dev=0.5,
+                              res_log=1
+) # enter parameter ranges
+
+# convert to a list of parameter vectors
+jobs_realistic_seq_list <- as.list( as.data.frame(t(jobs_realistic_seq)) )
+
+# farm out to cores ####
+results_realistic_seq <- mclapply( jobs_realistic_seq_list , sim_ub_arg_list, mc.cores = 50)
+
+
+
 
 # testing min, middle, and max values ####
-jobs_test <- expand.grid(tmax= c(30, 100),                        # tmax should roughly correspond to years, in the study site this is 30 
+jobs_test <- expand.grid(tmax= c(30),                        # tmax should roughly correspond to years, in the study site this is 30 
                             N_plots= c(10, 100, 3000),            # based on khoroo, but should be in the 1000s
                             N_migrants=c(10, 100, 1000),          # n of people coming into each khoroo every timestep, should be quite high also but less then max plots
                             N_fams= c(1, 100, 10000),             # everyone has the same fam, resonable chance of having fam in each timestep, low chance of having any fam in env
@@ -98,7 +122,7 @@ jobs_change <- expand.grid(tmax=tmax,
                               cap_thres_build=c((seq(from = -2, to = 2, length.out = tmax)), (seq(from = 2, to = -2, length.out = tmax)), (sample((seq(from = 2, to = -2, length.out = tmax)), tmax)) ),
                               cap_shock_mean=1,
                               cap_shock_dev=0.25,
-                              res_log=1
+                              res_log=0    #logging all would kill it 
 ) # enter parameter ranges
 
 # convert to a list of parameter vectors
