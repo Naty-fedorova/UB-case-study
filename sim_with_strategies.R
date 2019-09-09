@@ -1,7 +1,5 @@
 # Functions ####
 
-set.seed(1)
-
 strategy_assignment <- function(possessions, HC_at_move, intend_stay, strat_prob) {
   # This functions assigns one of three strategies to each agent (household)
   # they can either be assigned urban (1), suburban (2), or temporary (3)
@@ -42,6 +40,12 @@ get_preference_for_migrant <- function(strategy, capital) {
   # return: either "family" or "squat"
   
   # atm I don't have strong reasons for why these options have different likelihoods, discuss
+  
+  invalid_strategy <- is.null(strategy) | is.na(strategy) | !strategy %in% c(1, 2, 3)
+  if (invalid_strategy) print(paste0("invalid strategy:", strategy))
+  
+  invalid_capital <- is.null(capital) | is.na(capital)
+  if (invalid_capital) print(paste0("invalid capital:", capital))
   
   
   # for the suburban strategy

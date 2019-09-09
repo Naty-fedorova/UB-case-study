@@ -31,7 +31,7 @@ jobs_default_list <- list(1:run_sim)
 jobs_default_list[1:run_sim] <- as.list( as.data.frame(t(jobs_default)) )
 
 # farm out to cores ####
-results_default <- mclapply( jobs_default_list , sim_ub_arg_list, mc.cores = 50)  
+results_default <- mclapply( jobs_default_list , sim_ub_arg_list, mc.cores = 2)  
 
 
 ####
