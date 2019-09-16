@@ -2,7 +2,7 @@
 
 # load outputs
 
-load("output.Rdata")
+load("outputs.Rdata")
 
 # TODO should one spend time on reorganizing the results into a more reasonable format?
 
