@@ -6,6 +6,7 @@ library(viridis)
 # load outputs
 
 load("outputs.Rdata")
+load("output_capshock.Rdata")
 
 # TODO should one spend time on reorganizing the results into a more reasonable format?
 
@@ -74,7 +75,7 @@ plotprop_plot_single <- function(output, plot_ids_output, plot_own_output, plot_
 }
 
 
-# plotting settling process from realistic parameter set
+# plotting settling process from realistic parameter set ####
 
 hh_df_rel <- list()
 
@@ -100,9 +101,6 @@ for(i in 1:30){
 # plotting
 
 
-
-
-
 plot(0, ylim = c(0, 3000), xlim= c(0, 30), type = "n", xlab = "Timestep", ylab = "Frequency", family = "mono", axes = FALSE)
 axis(1, at = seq(0,30, 5), lwd = 0.5, col = "gray40", col.axis = "gray40")
 axis(2, at = seq(0,3000, 500), lwd = 0.5, col = "gray40", col.axis = "gray40")
@@ -121,6 +119,69 @@ for(i in 1:30){
 }
 
 legend(x = 18, y = 1000, c("ger squatter", "ger plot owner", "house&plot owner"), pch = c(1, 0, 7), col = c(point_col[1], point_col[2], point_col[3]), cex = 0.6, bty = "n")
+####
+
+# plotting outcome for different levels of strategy strength
+
+hh_df_strat <- list()
+
+for(i in 1:4){
+  hh_df <- results_strat[[i]][["hh_df_output"]]
+  plot_ids_output <- results_strat[[i]][["plot_ids_output"]]
+  plot_own_output <- results_strat[[i]][["plot_own_output"]]
+  
+  in_env <- data_structuring(hh_df)
+  
+  hh_df_strat[[i]] <- in_env
+}
+
+
+strat_1 <- table(hh_df_strat[[1]][["strategy"]], hh_df_strat[[1]][["cat"]])
+strat_2 <- table(hh_df_strat[[2]][["strategy"]], hh_df_strat[[2]][["cat"]])
+strat_3 <- table(hh_df_strat[[3]][["strategy"]], hh_df_strat[[3]][["cat"]])
+strat_4 <- table(hh_df_strat[[4]][["strategy"]], hh_df_strat[[4]][["cat"]])
+
+# plotting
+
+bar_col <- viridis(3)
+
+par(mfrow=c(1,4))
+barplot(start_1, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.1", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
+barplot(start_2, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.5", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
+barplot(start_3, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.7", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
+barplot(start_4, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "1", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
+
+####
+
+# plotting for different levels of capital shock ####
+
+hh_df_capshock <- list()
+capshock_table <- list()
+
+for(i in 1:15){
+  hh_df <- results_capshock[[i]][["hh_df_output"]]
+  plot_ids_output <- results_capshock[[i]][["plot_ids_output"]]
+  plot_own_output <- results_capshock[[i]][["plot_own_output"]]
+  
+  in_env <- data_structuring(hh_df)
+  
+  hh_df_capshock[[i]] <- in_env
+}
+
+for(i in 1:15){ 
+  capshock_table[[i]] <- table(hh_df_capshock[[i]][["strategy"]], hh_df_capshock[[i]][["cat"]])
+}
+
+# plotting
+
+bar_col <- viridis(3)
+
+par(mfrow=c(3,5))
+for(i in 1:4){
+  
+  # TODO this doesn't work atm because figure margins are too large
+  barplot(capshock_table[[i]])
+}
 
 
 
