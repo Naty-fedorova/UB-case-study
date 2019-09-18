@@ -183,6 +183,28 @@ save(c(results_default, results_realistic, results_test, results_change, results
 
 ####
 
+# variation in capital shock ####
+jobs_capshock <- expand.grid(tmax= 30,                  
+                          N_plots= 5000,            
+                          N_migrants= 1000,          
+                          N_fams= 10000,
+                          strat_prob= 0.5, 
+                          perc_sq= 0.2,                 
+                          cap_thres_st2= 0 ,          
+                          cap_thres_st13= 2,          
+                          cap_thres_build= 0, 
+                          cap_shock_mean=c(-2, -1, 0, 1, 2),
+                          cap_shock_dev=c(0, 0.5, 1),
+                          res_log=0
+) # enter parameter ranges
+
+# convert to a list of parameter vectors
+jobs_capshock_list <- as.list( as.data.frame(t(jobs_capshock)) )
+
+# farm out to cores ####
+results_capshock <- mclapply( jobs_capshock_list , sim_ub_arg_list, mc.cores = 50) 
+
+
 
 
 
