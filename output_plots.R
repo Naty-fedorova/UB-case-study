@@ -29,13 +29,9 @@ data_structuring <- function(output){
     }
     
     if(plot_own_output[ind] == 1){
-      
       in_env$owns_land[i] <- 1
-      
     }else{
-      
       in_env$owns_land[i] <- 0
-      
     }
   }
   
@@ -49,7 +45,6 @@ data_structuring <- function(output){
     if (in_env$owns_land[i] == 1 & in_env$owns_house[i] == 0){
       in_env$cat[i] <- "plot_owner"
     }
-    
     if (in_env$owns_land[i] == 0 & in_env$owns_house[i] == 0){
       in_env$cat[i] <- "ger_squatter"
     }
@@ -57,22 +52,6 @@ data_structuring <- function(output){
   return(in_env)
 }
 
-plotprop_plot_single <- function(output, plot_ids_output, plot_own_output, plot_house_output, hh_df){
-  # this function plots house vs. ger, and land ownership, for different strategy categories, for single sim run or single timestep
-  # param output: data considered in plotting (i.e. simulation run)
-  # param plot_ids_output: matrix of plots with agent IDs
-  # param plot_own_output: vector containing 0 for land not owned and 1 for land owned
-  # param plot_house_output: vector containing 0 for no permanent house and 1 for built house
-  # param hh_df: agent dataframe
-  # output: plot
-  
-  
-  
-  counts <- table(in_env$strategy, in_env$cat)
-  
-  barplot(t(counts), beside = TRUE)
-  
-}
 
 
 # plotting settling process from realistic parameter set ####
@@ -89,7 +68,6 @@ for(i in 1:30){
   in_env <- data_structuring(hh_df)
   
   hh_df_rel[[i]] <- in_env
-  
 }
 
 freq <- list()
@@ -99,13 +77,9 @@ for(i in 1:30){
 }
 
 # plotting
-
-
 plot(0, ylim = c(0, 3000), xlim= c(0, 30), type = "n", xlab = "Timestep", ylab = "Frequency", family = "mono", axes = FALSE)
 axis(1, at = seq(0,30, 5), lwd = 0.5, col = "gray40", col.axis = "gray40")
 axis(2, at = seq(0,3000, 500), lwd = 0.5, col = "gray40", col.axis = "gray40")
-
-
 point_col <- viridis(4)
 
 for(i in 1:30){
@@ -135,14 +109,12 @@ for(i in 1:4){
   hh_df_strat[[i]] <- in_env
 }
 
-
 strat_1 <- table(hh_df_strat[[1]][["strategy"]], hh_df_strat[[1]][["cat"]])
 strat_2 <- table(hh_df_strat[[2]][["strategy"]], hh_df_strat[[2]][["cat"]])
 strat_3 <- table(hh_df_strat[[3]][["strategy"]], hh_df_strat[[3]][["cat"]])
 strat_4 <- table(hh_df_strat[[4]][["strategy"]], hh_df_strat[[4]][["cat"]])
 
 # plotting
-
 bar_col <- viridis(3)
 
 par(mfrow=c(1,4))
@@ -150,7 +122,6 @@ barplot(start_1, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.1", ylim 
 barplot(start_2, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.5", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
 barplot(start_3, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.7", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
 barplot(start_4, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "1", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
-
 ####
 
 # plotting for different levels of capital shock ####
@@ -173,14 +144,18 @@ for(i in 1:15){
 }
 
 # plotting
-
 bar_col <- viridis(3)
+plot.new()
+par(mfrow=c(3,5), mar = c(1, 2, 1, 1))
+axis(2, at = seq(0, 6000, 2000), lwd = 0.5, col = "gray40", col.axis = "gray40"  )
 
-par(mfrow=c(3,5))
-for(i in 1:4){
-  
+for(i in 1:15){
   # TODO this doesn't work atm because figure margins are too large
-  barplot(capshock_table[[i]])
+  yaxt_on = "n"
+  if (i == 1 | i == 6 | i == 11) {
+    yaxt_on = "s"
+  }
+  barplot(capshock_table[[i]], col = c(bar_col[1], bar_col[2], bar_col[3]), xaxt = "n", yaxt = yaxt_on, ylim = c(0, 6000))
 }
 
 
