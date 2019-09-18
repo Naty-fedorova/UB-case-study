@@ -1,5 +1,8 @@
 # script for plotting ABM outputs
 
+install.packages("viridis")
+library(viridis)
+
 # load outputs
 
 load("outputs.Rdata")
@@ -14,13 +17,14 @@ load("outputs.Rdata")
 
 data_structuring <- function(output){
   # this function joins plot info with agent info for ease of plotting 
+  # TODO add description here
   
-  in_env <- hh_df_1[hh_df_1$in_env == 1, ]
+  in_env <- hh_df[hh_df$in_env == 1, ]
   
   for(i in 1: nrow(in_env)){
     ind <-  match(in_env$hh_id[i],  plot_ids_output)
-    if(ind > 100){
-      ind <- ind - 100  # second place in matrix
+    if(ind > (length(plot_ids_output)/2)){
+      ind <- ind - (length(plot_ids_output)/2)   # second place in matrix
     }
     
     if(plot_own_output[ind] == 1){
@@ -49,6 +53,7 @@ data_structuring <- function(output){
       in_env$cat[i] <- "ger_squatter"
     }
   }
+  return(in_env)
 }
 
 plotprop_plot_single <- function(output, plot_ids_output, plot_own_output, plot_house_output, hh_df){
@@ -67,6 +72,56 @@ plotprop_plot_single <- function(output, plot_ids_output, plot_own_output, plot_
   barplot(t(counts), beside = TRUE)
   
 }
+
+
+# plotting settling process from realistic parameter set
+
+hh_df_rel <- list()
+
+for(i in 1:30){
+  hh_df <- results_realistic_seq$V1$hh_df_output[i]
+  hh_df <- hh_df[[1]]
+  plot_ids_output <- results_realistic_seq$V1$plot_ids_output[i]
+  plot_ids_output <- plot_ids_output[[1]]
+  plot_own_output <- results_realistic_seq$V1$plot_own_output[i, ]
+  
+  in_env <- data_structuring(hh_df)
+  
+  hh_df_rel[[i]] <- in_env
+  
+}
+
+freq <- list()
+
+for(i in 1:30){
+  freq[[i]] <- table(hh_df_rel[[i]][["cat"]])
+}
+
+# plotting
+
+
+
+
+
+plot(0, ylim = c(0, 3000), xlim= c(0, 30), type = "n", xlab = "Timestep", ylab = "Frequency", family = "mono", axes = FALSE)
+axis(1, at = seq(0,30, 5), lwd = 0.5, col = "gray40", col.axis = "gray40")
+axis(2, at = seq(0,3000, 500), lwd = 0.5, col = "gray40", col.axis = "gray40")
+
+
+point_col <- viridis(4)
+
+for(i in 1:30){
+  n_ger_squatter <- 0
+  if("ger_squatter" %in% names(freq[[i]])) {
+    n_ger_squatter <-freq[[i]][["ger_squatter"]]
+  }
+  points(x = i, y = n_ger_squatter, pch = 1, col = point_col[1], lwd = 2)
+  points(x = i, y = freq[[i]][["plot_owner"]], pch = 0, col = point_col[2], lwd = 2)
+  points(x = i, y = freq[[i]][["house_owner"]], pch = 7, col = point_col[3], lwd = 2)
+}
+
+legend(x = 18, y = 1000, c("ger squatter", "ger plot owner", "house&plot owner"), pch = c(1, 0, 7), col = c(point_col[1], point_col[2], point_col[3]), cex = 0.6, bty = "n")
+
 
 
 
