@@ -7,8 +7,8 @@ library(viridis)
 
 load("outputs.Rdata")
 load("output_capshock.Rdata")
+load("output_strat_ran.Rdata")
 
-# TODO should one spend time on reorganizing the results into a more reasonable format?
 
 
 # plot n of houses against n of gers (i.e. agents who built house against agents who didn't)
@@ -77,7 +77,8 @@ for(i in 1:30){
 }
 
 # plotting
-plot(0, ylim = c(0, 3000), xlim= c(0, 30), type = "n", xlab = "Timestep", ylab = "Frequency", family = "mono", axes = FALSE)
+plot.new()
+plot(0, ylim = c(0, 3000), xlim= c(0, 30), type = "n", xlab = "Timestep", ylab = "Frequency", family = "mono", axes = FALSE, col.lab = "gray40")
 axis(1, at = seq(0,30, 5), lwd = 0.5, col = "gray40", col.axis = "gray40")
 axis(2, at = seq(0,3000, 500), lwd = 0.5, col = "gray40", col.axis = "gray40")
 point_col <- viridis(4)
@@ -118,10 +119,10 @@ strat_4 <- table(hh_df_strat[[4]][["strategy"]], hh_df_strat[[4]][["cat"]])
 bar_col <- viridis(3)
 
 par(mfrow=c(1,4))
-barplot(start_1, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.1", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
-barplot(start_2, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.5", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
-barplot(start_3, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.7", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
-barplot(start_4, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "1", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
+barplot(strat_1, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.1", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
+barplot(strat_2, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.5", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10, yaxt = "n")
+barplot(strat_3, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.7", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10, yaxt = "n")
+barplot(strat_4, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "1", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10, yaxt = "n")
 ####
 
 # plotting for different levels of capital shock ####
@@ -144,6 +145,9 @@ for(i in 1:15){
 }
 
 # plotting
+# version names
+load("capshock_v.Rdata")
+
 bar_col <- viridis(3)
 plot.new()
 par(mfrow=c(3,5), mar = c(1, 2, 1, 1))
@@ -155,9 +159,10 @@ for(i in 1:15){
   if (i == 1 | i == 6 | i == 11) {
     yaxt_on = "s"
   }
-  barplot(capshock_table[[i]], col = c(bar_col[1], bar_col[2], bar_col[3]), xaxt = "n", yaxt = yaxt_on, ylim = c(0, 6000))
+  barplot(capshock_table[[i]], col = c(bar_col[1], bar_col[2], bar_col[3]), xaxt = "n", yaxt = yaxt_on, ylim = c(0, 6000), space = 0.5, width = 20)
 }
 
+#xlab = c(jobs_capshock[i, 10], jobs_capshock[i,11])
 
 
 
