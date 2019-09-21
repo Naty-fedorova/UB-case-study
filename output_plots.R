@@ -81,7 +81,7 @@ plot.new()
 plot(0, ylim = c(0, 3000), xlim= c(0, 30), type = "n", xlab = "Timestep", ylab = "Frequency", family = "mono", axes = FALSE, col.lab = "gray40")
 axis(1, at = seq(0,30, 5), lwd = 0.5, col = "gray40", col.axis = "gray40")
 axis(2, at = seq(0,3000, 500), lwd = 0.5, col = "gray40", col.axis = "gray40")
-point_col <- viridis(4)
+point_col <- cividis(4)
 
 for(i in 1:30){
   n_ger_squatter <- 0
@@ -116,7 +116,7 @@ strat_3 <- table(hh_df_strat[[3]][["strategy"]], hh_df_strat[[3]][["cat"]])
 strat_4 <- table(hh_df_strat[[4]][["strategy"]], hh_df_strat[[4]][["cat"]])
 
 # plotting
-bar_col <- viridis(3)
+bar_col <- cividis(3)
 
 par(mfrow=c(1,4))
 barplot(strat_1, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "0.1", ylim = c(0,3500), xlim = c(0, 20), xaxt='n', space = 1, width = 10 )
@@ -141,17 +141,20 @@ for(i in 1:15){
 }
 
 for(i in 1:15){ 
-  capshock_table[[i]] <- table(hh_df_capshock[[i]][["strategy"]], hh_df_capshock[[i]][["cat"]])
+  capshock_table[[i]] <- table(hh_df_capshock[[i]][["cat"]])
 }
 
 # plotting
 # version names
 load("capshock_v.Rdata")
 
-bar_col <- viridis(3)
+bar_col <- cividis(4)
 plot.new()
-par(mfrow=c(3,5), mar = c(1, 2, 1, 1))
-axis(2, at = seq(0, 6000, 2000), lwd = 0.5, col = "gray40", col.axis = "gray40"  )
+par(mfrow=c(3,5), mar = c(0.5, 3, 1, 0))
+axis(2, at = seq(0, 7000, 2000), lwd = 0.5, col = "gray40", col.axis = "gray40"  )
+lab <- c("-2", "-1", "0", "1", "2")    # should extract this directly from table names
+lab_y <- c("0","","","","","0.5","", "", "", "", "1")
+
 
 for(i in 1:15){
   # TODO this doesn't work atm because figure margins are too large
@@ -159,10 +162,21 @@ for(i in 1:15){
   if (i == 1 | i == 6 | i == 11) {
     yaxt_on = "s"
   }
+  
+  if(length(capshock_table[[i]]) == 3){
   barplot(capshock_table[[i]], col = c(bar_col[1], bar_col[2], bar_col[3]), xaxt = "n", yaxt = yaxt_on, ylim = c(0, 6000), space = 0.5, width = 20)
+  } else{
+    barplot(capshock_table[[i]], col = c(bar_col[2], bar_col[3]) , xaxt = "n", yaxt = yaxt_on, ylim = c(0, 6000), space = 0.5, width = 20)
+  }
+  
+  if(i == 1 | i == 2 | i == 3 | i == 4 | i == 5){
+    text(x = 50, y = 5000, labels = lab[i])
+  }
+  if (i == 1 | i == 6 | i == 11) {
+    title(ylab = lab_y[i], line = 2 )
+  }
 }
 
-#xlab = c(jobs_capshock[i, 10], jobs_capshock[i,11])
 
 
 
