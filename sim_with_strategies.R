@@ -1,6 +1,6 @@
 # Functions ####
 
-strategy_assignment <- function(possessions, HC_at_move, intend_stay, strat_prob) {
+strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
   # This functions assigns one of three strategies to each agent (household)
   # they can either be assigned urban (1), suburban (2), or temporary (3)
   # strategy is a product of internat preference , possesions outside UB, and household composition at move
@@ -35,18 +35,27 @@ get_preference_for_migrant <- function(strategy, capital) {
   # based on their strategy, and capital (could also include all the other factors)
   # preferences are stochastic, preserving nuance (what if you have a really sucky family?)
   # capital only affects the suburban strategy, as those are the only ones prefering squatting 
-  # param strategy: whether the agents strategy is urban(1), suburban(2), or temporary(3)
+  # param strategy: whether the agents strategy is urban(1), suburban(2), temporary(3), or random(0)
   # param capital: wealth (broadly)
   # return: either "family" or "squat"
   
   # atm I don't have strong reasons for why these options have different likelihoods, discuss
   
-  invalid_strategy <- is.null(strategy) | is.na(strategy) | !strategy %in% c(1, 2, 3)
+  invalid_strategy <- is.null(strategy) | is.na(strategy) | !strategy %in% c(0, 1, 2, 3)
   if (invalid_strategy) print(paste0("invalid strategy:", strategy))
   
   invalid_capital <- is.null(capital) | is.na(capital)
   if (invalid_capital) print(paste0("invalid capital:", capital))
   
+  # for the random strategy
+  if (strategy == 0) {
+    if (rbinom(1, 1, prob = 0.5) == 1) {
+      return("family")
+    }
+    else {
+      return("squat")
+    }
+  }
   
   # for the suburban strategy
   if (strategy == 2 && capital > 0) {
@@ -221,6 +230,12 @@ leaving_land <- function(strategy, capital_acc, residence_length_total){
   # param residence_length_total: total t spent in environment
   # return: either "leave" or "stay" 
   
+  # for random strategy
+  if(strategy == 0){
+    if (rbinom(1, 1, prob = 0.3) == 1) {
+      return("leave")
+    }
+  }
   
   # if your strategy is urban and you get above 2 in capital_acc, leave environment (return "leave")
   if(strategy == 1 & capital_acc > 2){
@@ -272,12 +287,13 @@ error_check <- function(t, hh_df, plot_ids, plot_pop, message){
 
 # Simulation #########
 
-sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0.6, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, cap_shock_mean = 1, cap_shock_dev = 0.25, res_log = 0) {
+sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, use_strat=1, perc_sq=0.2, cap_thres_st2=0, cap_thres_st13= 2, cap_thres_build=0, cap_shock_mean = 1, cap_shock_dev = 0.25, res_log = 0) {
   # Master function for ABM
   # param tmax: number of runs
   # param N_plots: number of plots in environment
   # param N_migrants: number of agents entering environment at each timestep
   # param N_fams: number of families in environment
+  # param use_strat: binary condition, 1: use strategies in sim, 0: don't use strategies in sim
   # param perc_sq: percent of squatters that have to move after each timestep
   # param cap_thres_st2: capital threshold needed for strategy 2 agents to buy land 
   # param cap_thres_st13: capital threshold needed for strategy 1 and 3 agents to buy land
@@ -318,8 +334,10 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0
   hh_df <- data.frame(hh_id, fam_id, strategy, capital, capital_tminusone, capital_acc, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, fam_in_env, house_invest, env_left)
   
   # strategy assignment
-  for (i in 1:nrow(hh_df)){
-    hh_df$strategy[i] <- strategy_assignment(possessions = hh_df$possessions[i], HC_at_move = hh_df$HC_at_move[i], intend_stay = hh_df$intend_stay[i], strat_prob = strat_prob)
+  if(use_strat == 1){
+    for (i in 1:nrow(hh_df)){
+      hh_df$strategy[i] <- strategy_assignment(possessions = hh_df$possessions[i], HC_at_move = hh_df$HC_at_move[i], intend_stay = hh_df$intend_stay[i])
+    }
   }
   
   # init plots
@@ -465,6 +483,12 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0
     for (i in 1:nrow(plot_ids)){
       # get own occupied patches
       if(plot_ids[i,1] > 0){
+        
+        # if strategy is random (0), stochastically buy land
+        if( hh_df$strategy[plot_ids[i,1]] == 0 & plot_own[i] == 0 & hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2[t]){
+          plot_own[i] <- rbinom(1, 1, 0.5) #super stochastic
+        }
+        
         # if strategy is suburban (2), their capital is more than 0, and they are living on their own plot, they can buy the land (stochastic)
         if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2[t] & plot_own[i] == 0 & hh_df$strategy[plot_ids[i,1]] == 2){  
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
@@ -593,6 +617,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, strat_prob=0
 # 1: urban strategy: goal is to live in the central city, centrality maximization
 # 2: suburban strategy: goal is to live in the ger districts, space maximization
 # 3: temporary strategy: goal is to extract capital from UB, capital maximization
+# 0: random, make decisions stochastically
 
 # questions
 # how to include household composition in here (without making this a crazy model) atm just used for strategy and recorded at environment entry
