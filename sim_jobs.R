@@ -15,7 +15,7 @@ jobs_default <- expand.grid(tmax=10,
                     N_plots=100, 
                     N_migrants=20, 
                     N_fams=20,
-                    strat_prob= 0.6,
+                    use_strat= 1,
                     perc_sq=0.2, 
                     cap_thres_st2=0, 
                     cap_thres_st13=2, 
@@ -42,7 +42,7 @@ jobs_realistic <- expand.grid(tmax=30,
                               N_plots=5000, 
                               N_migrants=1000, 
                               N_fams=20000,
-                              strat_prob= 0.6,
+                              use_strat= 1,
                               perc_sq=0.2, 
                               cap_thres_st2=0, 
                               cap_thres_st13=2, 
@@ -67,7 +67,7 @@ jobs_realistic_seq <- expand.grid(tmax=30,
                               N_plots=5000, 
                               N_migrants=1000, 
                               N_fams=20000,
-                              strat_prob= 0.6,
+                              use_strat= 1,
                               perc_sq=0.2, 
                               cap_thres_st2=0, 
                               cap_thres_st13=2, 
@@ -78,20 +78,20 @@ jobs_realistic_seq <- expand.grid(tmax=30,
 ) # enter parameter ranges
 
 # convert to a list of parameter vectors
+run_sim <- 10
+jobs_realistic_seq_list <- list(1:run_sim) 
 jobs_realistic_seq_list <- as.list( as.data.frame(t(jobs_realistic_seq)) )
 
 # farm out to cores ####
 results_realistic_seq <- mclapply( jobs_realistic_seq_list , sim_ub_arg_list, mc.cores = 50)
 
 
-
-
 # testing min, middle, and max values ####
-jobs_test <- expand.grid(tmax= c(30),                        # tmax should roughly correspond to years, in the study site this is 30 
+jobs_test <- expand.grid(tmax= 30,                        # tmax should roughly correspond to years, in the study site this is 30 
                             N_plots= c(10, 100, 3000),            # based on khoroo, but should be in the 1000s
                             N_migrants=c(10, 100, 1000),          # n of people coming into each khoroo every timestep, should be quite high also but less then max plots
                             N_fams= c(1, 100, 10000),             # everyone has the same fam, resonable chance of having fam in each timestep, low chance of having any fam in env
-                            strat_prob= c(0.1, 0.5, 0.9),         # prob of assigning strat
+                            use_strat= c(1, 0),                   # strat used in sim decision making or not
                             perc_sq=c(0, 0.5, 1),                 # no squatters, half squatters move, all squatters move
                             cap_thres_st2=c(-1, 0, 1),            # just went for 1 sd either direction
                             cap_thres_st13=c(-2, 0, 2),           # went for 2 sd either direction
@@ -115,7 +115,7 @@ jobs_change <- expand.grid(tmax=tmax,
                               N_plots=1000, 
                               N_migrants=200, 
                               N_fams=10000, 
-                              strat_prob= 0.6,
+                              use_strat= 1,
                               perc_sq= c((seq(from = 0.1, to = 0.9, length.out = tmax)), (seq(from = 0.9, to = 0.1, length.out = tmax)), (sample((seq(from = 0.9, to = 0.1, length.out = tmax)), tmax)) ),  
                               cap_thres_st2=c((seq(from = -2, to = 2, length.out = tmax)), (seq(from = 2, to = -2, length.out = tmax)), (sample((seq(from = 2, to = -2, length.out = tmax)), tmax)) ), 
                               cap_thres_st13=c((seq(from = -2, to = 2, length.out = tmax)), (seq(from = 2, to = -2, length.out = tmax)), (sample((seq(from = 2, to = -2, length.out = tmax)), tmax)) ), 
@@ -138,7 +138,7 @@ jobs_capvar <- expand.grid(tmax= 30,
                          N_plots= 5000,            
                          N_migrants= 1000,          
                          N_fams= 10000,
-                         strat_prob= 0.6,
+                         use_strat= 1,
                          perc_sq= 0.2,                 
                          cap_thres_st2=c(-2, -1, 0, 1, 2),          
                          cap_thres_st13=c(-2, -1, 0, 1, 2),          
@@ -161,7 +161,7 @@ jobs_strat <- expand.grid(tmax= 30,
                            N_plots= 5000,            
                            N_migrants= 1000,          
                            N_fams= 10000,
-                           strat_prob= c(0.1, 0.5, 0.7, 1), 
+                           use_strat= c(1, 0), 
                            perc_sq= 0.2,                 
                            cap_thres_st2= 0 ,          
                            cap_thres_st13= 2,          
@@ -188,7 +188,7 @@ jobs_capshock <- expand.grid(tmax= 30,
                           N_plots= 5000,            
                           N_migrants= 1000,          
                           N_fams= 10000,
-                          strat_prob= 0.5, 
+                          use_strat= 1, 
                           perc_sq= 0.2,                 
                           cap_thres_st2= 0 ,          
                           cap_thres_st13= 2,          
