@@ -13,17 +13,17 @@ strategy_assignment <- function(possessions, HC_at_move, intend_stay, strat_prob
   
   # for urban strategy
   if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 3) & possessions == 0 & intend_stay == 1) {
-    sample(1:3, 1, prob = c(strat_prob, (1-strat_prob)/2 , (1-strat_prob)/2) )
+    sample(1:3, 1, prob = c(1, 0 , 0))
   }
   
   # for suburban strategy
   if ((HC_at_move == 4 | HC_at_move == 5) & possessions == 0 & intend_stay == 1) {
-    sample(1:3, 1, prob = c((1-strat_prob)/2, strat_prob, (1-strat_prob)/2) )
+    sample(1:3, 1, prob = c(0, 1, 0))
   }
   
   # for temporary strategy
   if ((HC_at_move == 1 | HC_at_move == 2 | HC_at_move == 5 | HC_at_move == 6 ) & possessions == 1 & intend_stay == 0) {
-    sample(1:3, 1, prob = c((1-strat_prob)/2, (1-strat_prob)/2, strat_prob) )
+    sample(1:3, 1, prob = c(0, 0, 1))
   } else{
     # if none of these combinations are fulfilled, just random sample
     sample(1:3, 1)
