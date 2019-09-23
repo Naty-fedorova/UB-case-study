@@ -334,11 +334,10 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, use_strat=1,
   hh_df <- data.frame(hh_id, fam_id, strategy, capital, capital_tminusone, capital_acc, intend_stay, HC_at_move, possessions, residence_length_plot, residence_length_total, total_mig, in_env, fam_in_env, house_invest, env_left)
   
   # strategy assignment
-  if(use_strat == 1){
-    for (i in 1:nrow(hh_df)){
-      hh_df$strategy[i] <- strategy_assignment(possessions = hh_df$possessions[i], HC_at_move = hh_df$HC_at_move[i], intend_stay = hh_df$intend_stay[i])
-    }
+  for (i in 1:nrow(hh_df)){
+    hh_df$strategy[i] <- strategy_assignment(possessions = hh_df$possessions[i], HC_at_move = hh_df$HC_at_move[i], intend_stay = hh_df$intend_stay[i])
   }
+
   
   # init plots
   plot_capacity <- 2 # hard-coded for now
