@@ -8,6 +8,7 @@ library(viridis)
 load("outputs.Rdata")
 load("output_capshock.Rdata")
 load("output_strat.Rdata")
+load("output_realseq.Rdata")
 
 
 
@@ -56,43 +57,61 @@ data_structuring <- function(output){
 
 # plotting settling process from realistic parameter set ####
 
-hh_df_rel <- list()
+hh_df_rel <- rep(list(list()), 10)
 
-for(i in 1:30){
-  hh_df <- results_realistic_seq$V1$hh_df_output[i]
-  hh_df <- hh_df[[1]]
-  plot_ids_output <- results_realistic_seq$V1$plot_ids_output[i]
-  plot_ids_output <- plot_ids_output[[1]]
-  plot_own_output <- results_realistic_seq$V1$plot_own_output[i, ]
-  
-  in_env <- data_structuring(hh_df)
-  
-  hh_df_rel[[i]] <- in_env
+for(j in 1:10){
+  for(i in 1:30){
+    hh_df <- results_realistic_seq[[j]]$hh_df_output[i]
+    hh_df <- hh_df[[1]]
+    plot_ids_output <- results_realistic_seq[[j]]$plot_ids_output[i]
+    plot_ids_output <- plot_ids_output[[1]]
+    plot_own_output <- results_realistic_seq[[j]]$plot_own_output[i, ]
+    
+    in_env <- data_structuring(hh_df)
+    
+    hh_df_rel[[j]][[i]] <- in_env
+  }
 }
 
-freq <- list()
 
-for(i in 1:30){
-  freq[[i]] <- table(hh_df_rel[[i]][["cat"]])
+freq <- rep(list(list()), 10)
+
+for(j in 1:10){
+  for(i in 1:30){
+    freq[[j]][[i]] <- table(hh_df_rel[[j]][[i]][["cat"]])
+  }
 }
 
 # plotting
 png(filename = "Rplot_process.png", res = 300, height = 10, width = 10, units = "cm")
 plot.new()
-plot(0, ylim = c(0, 3000), xlim= c(0, 30), type = "n", xlab = "Timestep", ylab = "Frequency", line = 2, axes = FALSE, col.lab = "gray40")
-axis(1, at = seq(0,30, 5), lwd = 0.5, col = "gray40", col.axis = "gray40")
-axis(2, at = seq(0,3000, 500), lwd = 0.5, col = "gray40", col.axis = "gray40")
+plot(0, ylim = c(0, 4000), xlim= c(0, 30), type = "n", xlab = "Timestep", ylab = "Frequency", line = 2, axes = FALSE)
+axis(1, at = seq(0,30, 5), lwd = 0.5)
+axis(2, at = seq(0,5000, 500), lwd = 0.5)
 point_col <- cividis(4)
 
 for(i in 1:30){
   n_ger_squatter <- 0
-  if("ger_squatter" %in% names(freq[[i]])) {
-    n_ger_squatter <-freq[[i]][["ger_squatter"]]
+  if("ger_squatter" %in% names(freq[[1]][[i]])) {
+    n_ger_squatter <-freq[[1]][[i]][["ger_squatter"]]
   }
   points(x = i, y = n_ger_squatter, pch = 1, col = point_col[1], lwd = 2)
-  points(x = i, y = freq[[i]][["plot_owner"]], pch = 0, col = point_col[2], lwd = 2)
-  points(x = i, y = freq[[i]][["house_owner"]], pch = 7, col = point_col[3], lwd = 2)
+  points(x = i, y = freq[[1]][[i]][["plot_owner"]], pch = 0, col = point_col[2], lwd = 2)
+  points(x = i, y = freq[[1]][[i]][["house_owner"]], pch = 7, col = point_col[3], lwd = 2)
 }
+
+for(j in 2:10){
+  for(i in 1:30){
+    n_ger_squatter <- 0
+    if("ger_squatter" %in% names(freq[[j]][[i]])) {
+      n_ger_squatter <-freq[[j]][[i]][["ger_squatter"]]
+    }
+    points(x = i, y = n_ger_squatter, pch = 1, col = point_col[1])
+    points(x = i, y = freq[[j]][[i]][["plot_owner"]], pch = 0, col = point_col[2])
+    points(x = i, y = freq[[j]][[i]][["house_owner"]], pch = 7, col = point_col[3])
+  }
+}
+
 
 legend(x = 18, y = 1000, c("ger squatter", "ger plot owner", "house&plot owner"), pch = c(1, 0, 7), col = c(point_col[1], point_col[2], point_col[3]), cex = 0.6, bty = "n")
 
@@ -100,7 +119,7 @@ dev.off()
 ####
 
 # plotting outcome for different levels of strategy strength
-png(filename = "Rplot_strat.png", res = 300, height = 10, width = 10, units = "cm")
+x
 
 hh_df_strat <- list()
 
@@ -121,15 +140,18 @@ strat_2 <- table(hh_df_strat[[2]][["strategy"]], hh_df_strat[[2]][["cat"]])
 ger_squatters <- c(0,0,0)
 strat_1 <- cbind(ger_squatters, strat_1)
 
-
 # plotting
+png(filename = "Rplot_strat.png", res = 300, height = 10, width = 10, units = "cm")
+
 bar_col <- cividis(4)
-
 par(mfrow=c(1,2), mar = c(2, 3, 1, 1))
-barplot(strat_1, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "Strategy present", col.lab = "grey40", ylim = c(0,4000), xaxt='n', space = 1, width = 20, line = 1 )
+barplot(strat_1, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "Strategy present", ylim = c(0,4000), xaxt='n', space = 1, width = 20, line = 1 )
+text(x = c(30,70,110), y = c(3900,3900,3900), labels = c("gs", "gpo", "hpo"), cex = 0.7)
 
-barplot(strat_2, col= "black", xlab = "Strategy absent", col.lab = "grey40", ylim = c(0,4000), xaxt='n', space = 1, width = 20, yaxt = "n", line = 1)
-legend("topright", c("startegy 1", "startegy 2", "startegy 3", "no strategy in sim"), pch = c(0,0,0,0) , col = c(bar_col[1], bar_col[2], bar_col[3], "black"), cex = 1, bty = "n")
+barplot(strat_2, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "Strategy absent", ylim = c(0,4000), xaxt='n', space = 1, width = 20, yaxt = "n", line = 1)
+text(x = c(30,70,110), y = c(2500,2500,2500), labels = c("gs", "gpo", "hpo"), cex = 0.7)
+
+legend("topright", c("Urban startegy", "Suburban startegy", "Temporary startegy"), pch = c(15,15,15), col = c(bar_col[1], bar_col[2], bar_col[3], "black"), cex = 0.6, bty = "n")
 
 dev.off()
 ####
@@ -157,14 +179,16 @@ for(i in 1:15){
 
 # plotting
 # version names
-load("capshock_v.Rdata")
+#load("capshock_v.Rdata")
+
+png(filename = "Rplot_capshock.png", res = 300, height = 10, width = 10, units = "cm")
 
 bar_col <- cividis(4)
 plot.new()
-par(mfrow=c(3,5), mar = c(0.5, 3, 1, 0))
+par(mfrow=c(3,5), mar = c(0.5, 3, 1, 0), oma = c(1,1,1,1))
 axis(2, at = seq(0, 7000, 2000), lwd = 0.5, col = "gray40", col.axis = "gray40"  )
-lab <- c("-2", "-1", "0", "1", "2")    # should extract this directly from table names
-lab_y <- c("0","","","","","0.5","", "", "", "", "1")
+lab <- c("μ=-2", "μ=-1", "μ=0", "μ=1", "μ=2")    # should extract this directly from table names
+lab_y <- c("σ=0","","","","","σ=0.5","", "", "", "", "σ=1")
 
 
 for(i in 1:15){
@@ -175,19 +199,20 @@ for(i in 1:15){
   }
   
   if(length(capshock_table[[i]]) == 3){
-  barplot(capshock_table[[i]], col = c(bar_col[1], bar_col[2], bar_col[3]), xaxt = "n", yaxt = yaxt_on, ylim = c(0, 6000), space = 0.5, width = 20)
+    data_to_plot <- capshock_table[[i]]
   } else{
-    barplot(capshock_table[[i]], col = c(bar_col[2], bar_col[3]) , xaxt = "n", yaxt = yaxt_on, ylim = c(0, 6000), space = 0.5, width = 20)
+    data_to_plot <- c(0, capshock_table[[i]][1], capshock_table[[i]][2])
   }
+  barplot(data_to_plot, col = c(bar_col[1], bar_col[2], bar_col[3]), xaxt = "n", yaxt = yaxt_on, ylim = c(0, 6000), space = 0.5, width = 20)
   
   if(i == 1 | i == 2 | i == 3 | i == 4 | i == 5){
-    text(x = 50, y = 5000, labels = lab[i])
+    mtext(text = lab[i], side = 3)
   }
   if (i == 1 | i == 6 | i == 11) {
-    title(ylab = lab_y[i], line = 2 )
+    mtext(text = lab_y[i], side = 2, line = 2)
   }
 }
 
-
+dev.off()
 
 
