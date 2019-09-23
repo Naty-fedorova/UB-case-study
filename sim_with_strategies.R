@@ -30,7 +30,7 @@ strategy_assignment <- function(possessions, HC_at_move, intend_stay) {
   }
 }
 
-get_preference_for_migrant <- function(strategy, capital) {
+get_preference_for_migrant <- function(strategy, capital, use_strat) {
   # This function decides a migrant's preference between staying with family, or squatting an empty plot 
   # based on their strategy, and capital (could also include all the other factors)
   # preferences are stochastic, preserving nuance (what if you have a really sucky family?)
@@ -46,6 +46,10 @@ get_preference_for_migrant <- function(strategy, capital) {
   
   invalid_capital <- is.null(capital) | is.na(capital)
   if (invalid_capital) print(paste0("invalid capital:", capital))
+  
+  if(use_strat == 0){
+    strategy <- 0
+  }
   
   # for the random strategy
   if (strategy == 0) {
@@ -146,7 +150,7 @@ get_destination_squat <- function(plot_pop) {
   return(0)
 }
 
-finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
+finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity, use_strat){
   # This function carries out the land finding part of the simulation
   # based on preferences derived from strategy and capital
   # agents either first try family, or first try to squat
@@ -159,7 +163,7 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
   
   destination <- 0
   # preference dictates order of choice between empty or family plot
-  preference_of_stay <- get_preference_for_migrant(hh_df$strategy[hh_index], hh_df$capital[hh_index])
+  preference_of_stay <- get_preference_for_migrant(hh_df$strategy[hh_index], hh_df$capital[hh_index], use_strat = use_strat)
   
   if (preference_of_stay == "family") {
     destination <- get_destination_family( hh_df$fam_id[hh_index], plot_ids, plot_pop, plot_capacity, hh_df)
@@ -221,7 +225,7 @@ finding_land <- function(hh_index, hh_df, plot_ids, plot_pop, plot_capacity){
   )
 }
 
-leaving_land <- function(strategy, capital_acc, residence_length_total){
+leaving_land <- function(strategy, capital_acc, residence_length_total, use_strat){
   # function that determines whether you should leave the environment or not
   # thresholds in this function can respond to optimal model
   # based on strategy, capital_acc, and residence_length_total
@@ -229,6 +233,10 @@ leaving_land <- function(strategy, capital_acc, residence_length_total){
   # param capital_acc: parameter that tracks how much capital has been accumulated (difference from first assignment) over t
   # param residence_length_total: total t spent in environment
   # return: either "leave" or "stay" 
+  
+  if(use_strat == 0){
+    strategy <- 0
+  }
   
   # for random strategy
   if(strategy == 0){
@@ -338,6 +346,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, use_strat=1,
     hh_df$strategy[i] <- strategy_assignment(possessions = hh_df$possessions[i], HC_at_move = hh_df$HC_at_move[i], intend_stay = hh_df$intend_stay[i])
   }
 
+
   
   # init plots
   plot_capacity <- 2 # hard-coded for now
@@ -409,7 +418,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, use_strat=1,
       for (i in 1:length(squatter_id)){
         hh_index = squatter_id[i] # one agent
         
-        l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)   
+        l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity, use_strat = use_strat)   
         hh_df <- l[["hh_df"]]
         plot_ids <- l[["plot_ids"]]
         plot_pop <- l[["plot_pop"]]
@@ -426,28 +435,30 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, use_strat=1,
     # agents with urban or suburban strategy want to live with family so don't move them
     
     # get people living with family and with strategy = 2
-    visitor_plots <- which(plot_ids[,2] != 0)
-    visitor_ids <- plot_ids[,2][visitor_plots]
-    visitors_2 <- visitor_ids[which(hh_df$strategy[visitor_ids] == 2)]
-    
-    if(length(visitors_2) > 0 ){
-      for(i in 1:length(visitors_2)){
-        # get plot
-        plot <- which(plot_ids[,2] == visitors_2[i])
-        
-        if(hh_df$capital[visitors_2[i]] > 0){
-          destination <- get_destination_squat(plot_pop)
-          if ( destination > 0 ) {
-            
-            # if they have found a new plot, remove them from all prior 
-            plot_ids[,2][plot] <- 0
-            plot_pop[plot] <- plot_pop[plot] - 1
-            hh_df$residence_length_plot[visitors_2[i]] <- 0
-            
-            #put them in new plot & update total mig
-            plot_pop[destination] <- plot_pop[destination] + 1
-            plot_ids[destination] <- visitors_2[i]
-            hh_df$total_mig[visitors_2[i]] <-  hh_df$total_mig[visitors_2[i]] + 1
+    if(use_strat == 1){
+      visitor_plots <- which(plot_ids[,2] != 0)
+      visitor_ids <- plot_ids[,2][visitor_plots]
+      visitors_2 <- visitor_ids[which(hh_df$strategy[visitor_ids] == 2)]
+      
+      if(length(visitors_2) > 0 ){
+        for(i in 1:length(visitors_2)){
+          # get plot
+          plot <- which(plot_ids[,2] == visitors_2[i])
+          
+          if(hh_df$capital[visitors_2[i]] > 0){
+            destination <- get_destination_squat(plot_pop)
+            if ( destination > 0 ) {
+              
+              # if they have found a new plot, remove them from all prior 
+              plot_ids[,2][plot] <- 0
+              plot_pop[plot] <- plot_pop[plot] - 1
+              hh_df$residence_length_plot[visitors_2[i]] <- 0
+              
+              #put them in new plot & update total mig
+              plot_pop[destination] <- plot_pop[destination] + 1
+              plot_ids[destination] <- visitors_2[i]
+              hh_df$total_mig[visitors_2[i]] <-  hh_df$total_mig[visitors_2[i]] + 1
+            }
           }
         }
       }
@@ -463,7 +474,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, use_strat=1,
       #calculate index so household data.frame can be indexed
       hh_index <- (t-1)*N_migrants + i #one agent
       
-      l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity)
+      l <- finding_land(hh_index, hh_df, plot_ids, plot_pop, plot_capacity, use_strat = use_strat)
       
       hh_df <- l[["hh_df"]]
       plot_ids <- l[["plot_ids"]]
@@ -483,18 +494,24 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, use_strat=1,
       # get own occupied patches
       if(plot_ids[i,1] > 0){
         
+        if(use_strat == 0){
+          strategy <- 0
+        }else{
+          strategy <- hh_df$strategy[plot_ids[i,1]]
+        }
+        
         # if strategy is random (0), stochastically buy land
-        if( hh_df$strategy[plot_ids[i,1]] == 0 & plot_own[i] == 0 & hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2[t]){
+        if( strategy == 0 & plot_own[i] == 0 & hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2[t]){
           plot_own[i] <- rbinom(1, 1, 0.5) #super stochastic
         }
         
         # if strategy is suburban (2), their capital is more than 0, and they are living on their own plot, they can buy the land (stochastic)
-        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2[t] & plot_own[i] == 0 & hh_df$strategy[plot_ids[i,1]] == 2){  
+        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st2[t] & plot_own[i] == 0 & strategy == 2){  
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
         }
         
         #if strategy is urban (1) or temporary (3), their capital more than 2, and they are living on their own plot, they can buy the land (stochastic)
-        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st13[t] & plot_own[i] == 0 & (hh_df$strategy[plot_ids[i,1]] == 1 | hh_df$strategy[plot_ids[i,1]] == 3)){ 
+        if(hh_df$capital_acc[plot_ids[i,1]] > cap_thres_st13[t] & plot_own[i] == 0 & (strategy == 1 | strategy == 3)){ 
           plot_own[i] <- rbinom(1, 1, 0.7) #stochastic
         }
       }
@@ -555,7 +572,7 @@ sim_ub <- function( tmax=10, N_plots=100, N_migrants=20, N_fams=20, use_strat=1,
     # individuals that have reached leaving threshold must be removed from env
     for (i in 1:length(hh_present)){
       
-      threshold_status <- leaving_land(strategy = hh_df$strategy[hh_present[i]], capital_acc = hh_df$capital_acc[hh_present[i]], residence_length_total = hh_df$residence_length_total[hh_present[i]])
+      threshold_status <- leaving_land(strategy = hh_df$strategy[hh_present[i]], capital_acc = hh_df$capital_acc[hh_present[i]], residence_length_total = hh_df$residence_length_total[hh_present[i]], use_strat = use_strat)
       
       if(threshold_status == "leave"){ 
         
