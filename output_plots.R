@@ -151,7 +151,7 @@ text(x = c(30,70,110), y = c(3900,3900,3900), labels = c("gs", "gpo", "hpo"), ce
 barplot(strat_2, col= c(bar_col[1], bar_col[2], bar_col[3]), xlab = "Strategy absent", ylim = c(0,4000), xaxt='n', space = 1, width = 20, yaxt = "n", line = 1)
 text(x = c(30,70,110), y = c(2500,2500,2500), labels = c("gs", "gpo", "hpo"), cex = 0.7)
 
-legend("topright", c("Urban startegy", "Suburban startegy", "Temporary startegy"), pch = c(15,15,15), col = c(bar_col[1], bar_col[2], bar_col[3], "black"), cex = 0.6, bty = "n")
+legend("topright", c("Urban strategy", "Suburban strategy", "Temporary strategy"), pch = c(15,15,15), col = c(bar_col[1], bar_col[2], bar_col[3], "black"), cex = 0.6, bty = "n")
 
 dev.off()
 ####
