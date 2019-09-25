@@ -119,7 +119,6 @@ dev.off()
 ####
 
 # plotting outcome for different levels of strategy strength
-x
 
 hh_df_strat <- list()
 
