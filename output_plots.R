@@ -4,8 +4,6 @@ install.packages("viridis")
 library(viridis)
 
 # load outputs
-
-load("outputs.Rdata")
 load("output_capshock.Rdata")
 load("output_strat.Rdata")
 load("output_realseq.Rdata")
@@ -100,18 +98,40 @@ for(i in 1:30){
   points(x = i, y = freq[[1]][[i]][["house_owner"]], pch = 7, col = point_col[3], lwd = 2)
 }
 
-for(j in 2:10){
-  for(i in 1:30){
-    n_ger_squatter <- 0
-    if("ger_squatter" %in% names(freq[[j]][[i]])) {
-      n_ger_squatter <-freq[[j]][[i]][["ger_squatter"]]
-    }
-    points(x = i, y = n_ger_squatter, pch = 1, col = point_col[1])
-    points(x = i, y = freq[[j]][[i]][["plot_owner"]], pch = 0, col = point_col[2])
-    points(x = i, y = freq[[j]][[i]][["house_owner"]], pch = 7, col = point_col[3])
-  }
-}
+# # Plot shapes for all runs
+# for(j in 2:10){
+#   for(i in 1:30){
+#     n_ger_squatter <- 0
+#     if("ger_squatter" %in% names(freq[[j]][[i]])) {
+#       n_ger_squatter <-freq[[j]][[i]][["ger_squatter"]]
+#     }
+#     points(x = i, y = n_ger_squatter, pch = 15, col = point_col[1], cex = 0.5)
+#     points(x = i, y = freq[[j]][[i]][["plot_owner"]], pch = 15, col = point_col[2], cex = 0.5)
+#     points(x = i, y = freq[[j]][[i]][["house_owner"]], pch = 15, col = point_col[3], cex = 0.5)
+#   }
+# }
 
+# # Plot lines for all runs
+# for(j in 2:10){
+#   for(i in 1:29){
+#     
+#     n_ger_squatter <- 0
+#     if("ger_squatter" %in% names(freq[[j]][[i]])) {
+#       n_ger_squatter <-freq[[j]][[i]][["ger_squatter"]]
+#     }
+#     gs_i <- n_ger_squatter
+#     
+#     n_ger_squatter <- 0
+#     if("ger_squatter" %in% names(freq[[j]][[i+1]])) {
+#       n_ger_squatter <-freq[[j]][[i+1]][["ger_squatter"]]
+#     }
+#     gs_i_plus1 <- n_ger_squatter
+#     
+#     lines(x = c(i, i+1), y = c(gs_i, gs_i_plus1), col = point_col[1])
+#     lines(x = c(i, i+1), y = c(freq[[j]][[i]][["plot_owner"]], freq[[j]][[i+1]][["plot_owner"]]), col = point_col[2])
+#     lines(x = c(i, i+1), y = c(freq[[j]][[i]][["house_owner"]], freq[[j]][[i+1]][["house_owner"]]), col = point_col[3])
+#   }
+# }
 
 legend(x = 18, y = 1000, c("ger squatter", "ger plot owner", "house&plot owner"), pch = c(1, 0, 7), col = c(point_col[1], point_col[2], point_col[3]), cex = 0.6, bty = "n")
 
